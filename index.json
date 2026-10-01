@@ -1,0 +1,166 @@
+{
+  "schema": "apex-mcp-hub-v1",
+  "name": "Apex MCP Hub",
+  "description": "Apex Agent official MCP server repository — sandbox (PRoot Ubuntu) and remote MCP servers, installable on demand from the in-app Market.",
+  "count": 8,
+  "servers": [
+    {
+      "name": "fs-sandbox",
+      "description": "Official filesystem MCP server running in the PRoot Ubuntu sandbox — read/write the coding workspace (/workspace) via the standard MCP file interface.",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/workspace"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "files",
+        "official"
+      ]
+    },
+    {
+      "name": "memory-sandbox",
+      "description": "Official knowledge-graph memory server — persistent entities/relations/observations, the sandboxed twin of the built-in memory MCP.",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "memory",
+        "official"
+      ]
+    },
+    {
+      "name": "everything-sandbox",
+      "description": "Official reference/test server covering the full MCP capability surface (tools/resources/prompts/sampling) — the go-to server to verify the sandbox pipeline.",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "testing",
+        "official"
+      ]
+    },
+    {
+      "name": "context7",
+      "description": "Up-to-date documentation for any library/framework — resolves stale-training-data answers with live docs lookup (Upstash Context7).",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "upstash",
+      "tags": [
+        "docs",
+        "coding"
+      ]
+    },
+    {
+      "name": "sequential-thinking",
+      "description": "Official dynamic problem-solving server — structured, revisable thought chains for complex multi-step reasoning.",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "reasoning",
+        "official"
+      ]
+    },
+    {
+      "name": "fetch",
+      "description": "Official web fetch server — retrieve any URL as cleaned markdown for context grounding, complementing the built-in web search.",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "web",
+        "official"
+      ]
+    },
+    {
+      "name": "time",
+      "description": "Official time server — current time, timezone conversion and locale-aware formatting on demand.",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-time"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "time",
+        "official"
+      ]
+    },
+    {
+      "name": "deepwiki",
+      "description": "DeepWiki MCP (remote, no sandbox needed) — ask questions about any GitHub repository using Devin's auto-generated wiki.",
+      "transport": "HTTP",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "env": {},
+      "runInSandbox": false,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": false,
+      "vendor": "cdnlify/deepwiki",
+      "tags": [
+        "docs",
+        "github",
+        "remote"
+      ]
+    }
+  ]
+}
