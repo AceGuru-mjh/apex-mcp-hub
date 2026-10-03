@@ -1,0 +1,67 @@
+name: Validate Registry
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1" # 每周一 03:17 UTC 例行在线巡检
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Index Schema & Entries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate index.json (schema / uniqueness / consistency)
+        run: python scripts/validate.py
+
+  online-smoke:
+    name: Package & Endpoint Reachability
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify npm/PyPI packages exist + HTTP MCP handshakes
+        run: python scripts/validate.py --online
+
+      - name: Raw URL reachability (the path the app actually fetches)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -e
+          python3 - <<'EOF'
+          import json, urllib.request, sys
+          idx = json.load(open("index.json"))
+          url = "https://raw.githubusercontent.com/${{ github.repository }}/main/index.json"
+          try:
+              with urllib.request.urlopen(url, timeout=30) as r:
+                  remote = json.load(r)
+              if r.status != 200:
+                  raise SystemExit(f"HTTP {r.status}")
+          except Exception as e:
+              sys.exit(f"index 不可达（main 未包含本次推送则属正常，重跑即过）: {e}")
+          local = json.load(open("index.json"))
+          if remote.get("count") != local.get("count"):
+              sys.exit(f"远端 count={remote.get('count')} 与本地 {local.get('count')} 不一致（main 未包含本次推送则重跑即过）")
+          print(f"OK: raw index 可达，{local['count']} 台")
+          EOF

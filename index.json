@@ -1,12 +1,153 @@
 {
   "schema": "apex-mcp-hub-v1",
   "name": "Apex MCP Hub",
-  "description": "Apex Agent official MCP server repository — sandbox (PRoot Ubuntu) and remote MCP servers, installable on demand from the in-app Market.",
-  "count": 8,
+  "description": "Apex Agent official MCP server repository — 50 verified servers across 15 categories (sandbox npx/uvx + hosted remote HTTP), installable on demand from the in-app Market.",
+  "count": 50,
+  "categories": {
+    "official": {
+      "label": "官方参考实现",
+      "count": 7
+    },
+    "docs": {
+      "label": "文档与知识",
+      "count": 5
+    },
+    "web-search": {
+      "label": "网络搜索",
+      "count": 6
+    },
+    "browser": {
+      "label": "浏览器自动化",
+      "count": 4
+    },
+    "database": {
+      "label": "数据库",
+      "count": 9
+    },
+    "git": {
+      "label": "Git 与代码托管",
+      "count": 3
+    },
+    "cloud": {
+      "label": "云平台",
+      "count": 2
+    },
+    "observability": {
+      "label": "可观测性",
+      "count": 2
+    },
+    "productivity": {
+      "label": "效率工具",
+      "count": 3
+    },
+    "desktop": {
+      "label": "桌面控制",
+      "count": 2
+    },
+    "finance": {
+      "label": "金融支付",
+      "count": 1
+    },
+    "design": {
+      "label": "设计",
+      "count": 1
+    },
+    "communication": {
+      "label": "通信协作",
+      "count": 2
+    },
+    "location": {
+      "label": "地图位置",
+      "count": 2
+    },
+    "data": {
+      "label": "数据源",
+      "count": 1
+    }
+  },
+  "changelog": [
+    {
+      "version": "2.0.0",
+      "date": "2026-10-03",
+      "notes": "v2 重组：并入 Android-Guru-Agent 内置 mcp_catalog 32 台（APK 不再随包分发）；修复 fetch/time 指向不存在 npm 包的问题；新增 microsoft-learn/context7-remote/amap/firecrawl/paper-search/mongodb/supabase/duckdb/neon/elasticsearch 十台（端点与包名逐一经 npm/PyPI/HTTP 握手验证）；全目录按 15 类分类（category 字段，前向兼容）。"
+    }
+  ],
   "servers": [
     {
+      "name": "everything-sandbox",
+      "description": "官方测试参考服务器：覆盖 MCP 全能力面（工具/资源/提示词/采样）——验证沙箱 MCP 管线的首选。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "testing",
+        "official",
+        "reference"
+      ],
+      "category": "official",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/everything",
+      "envSchema": [],
+      "notes": "全能力面冒烟测试用。"
+    },
+    {
+      "name": "fetch",
+      "description": "网页抓取服务器（node 纯 JS 形态）：URL → 干净 Markdown，内置分页与机器人规避。v2 修复：原 @modelcontextprotocol/server-fetch npm 包不存在，已切换为 @kazuph/mcp-fetch。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@kazuph/mcp-fetch"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "kazuph",
+      "tags": [
+        "web",
+        "fetch",
+        "markdown"
+      ],
+      "category": "official",
+      "homepage": "https://github.com/kazuph/mcp-fetch",
+      "envSchema": [],
+      "notes": "官方 Python 形态见 fetch-python（uvx）。"
+    },
+    {
+      "name": "fetch-python",
+      "description": "官方 Python 抓取服务器：网页转 Markdown、机器人仿真头、分页超时控制",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "official"
+      ],
+      "category": "official",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+      "envSchema": [],
+      "notes": "需要 rootfs 内含 uv（uvx 自动拉起 mcp-server-fetch）。"
+    },
+    {
       "name": "fs-sandbox",
-      "description": "Official filesystem MCP server running in the PRoot Ubuntu sandbox — read/write the coding workspace (/workspace) via the standard MCP file interface.",
+      "description": "官方文件系统 MCP（沙箱形态）：在 /workspace 作用域内读写文件、建目录、移动与搜索——内置 fs 的 npx 双胞胎。",
       "transport": "STDIO",
       "command": "npx",
       "args": [
@@ -22,12 +163,23 @@
       "vendor": "modelcontextprotocol",
       "tags": [
         "files",
-        "official"
-      ]
+        "official",
+        "workspace"
+      ],
+      "category": "official",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+      "envSchema": [
+        {
+          "key": "WORKSPACE",
+          "required": false,
+          "description": "可选：覆盖默认工作区路径（默认 /workspace）"
+        }
+      ],
+      "notes": "路径参数即允许访问的目录；沙箱形态以 /workspace 为作用域。"
     },
     {
       "name": "memory-sandbox",
-      "description": "Official knowledge-graph memory server — persistent entities/relations/observations, the sandboxed twin of the built-in memory MCP.",
+      "description": "官方知识图谱记忆 MCP（沙箱形态）：实体/关系/观察的持久化记忆——内置 memory 的 npx 双胞胎。",
       "transport": "STDIO",
       "command": "npx",
       "args": [
@@ -42,52 +194,17 @@
       "vendor": "modelcontextprotocol",
       "tags": [
         "memory",
-        "official"
-      ]
-    },
-    {
-      "name": "everything-sandbox",
-      "description": "Official reference/test server covering the full MCP capability surface (tools/resources/prompts/sampling) — the go-to server to verify the sandbox pipeline.",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-everything"
+        "official",
+        "knowledge-graph"
       ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "modelcontextprotocol",
-      "tags": [
-        "testing",
-        "official"
-      ]
-    },
-    {
-      "name": "context7",
-      "description": "Up-to-date documentation for any library/framework — resolves stale-training-data answers with live docs lookup (Upstash Context7).",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "upstash",
-      "tags": [
-        "docs",
-        "coding"
-      ]
+      "category": "official",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+      "envSchema": [],
+      "notes": "跨会话记忆外脑；与内置 memory MCP 同源同构。"
     },
     {
       "name": "sequential-thinking",
-      "description": "Official dynamic problem-solving server — structured, revisable thought chains for complex multi-step reasoning.",
+      "description": "官方顺序思考链服务器：动态分步推理、思路修正与分支——把长链推理从一次性输出变成可回溯的过程。",
       "transport": "STDIO",
       "command": "npx",
       "args": [
@@ -102,37 +219,21 @@
       "vendor": "modelcontextprotocol",
       "tags": [
         "reasoning",
-        "official"
-      ]
-    },
-    {
-      "name": "fetch",
-      "description": "Official web fetch server — retrieve any URL as cleaned markdown for context grounding, complementing the built-in web search.",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-fetch"
+        "official",
+        "thinking"
       ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "agent",
-      "requiresRootfs": true,
-      "vendor": "modelcontextprotocol",
-      "tags": [
-        "web",
-        "official"
-      ]
+      "category": "official",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
+      "envSchema": [],
+      "notes": "与内置 thinking MCP 互补的官方参考实现。"
     },
     {
       "name": "time",
-      "description": "Official time server — current time, timezone conversion and locale-aware formatting on demand.",
+      "description": "官方时间服务器（Python uvx 形态）：当前时间/时区换算与任意格式时间解析。v2 修复：原 @modelcontextprotocol/server-time npm 包不存在，已切换为 uvx mcp-server-time。",
       "transport": "STDIO",
-      "command": "npx",
+      "command": "uvx",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-time"
+        "mcp-server-time"
       ],
       "env": {},
       "runInSandbox": true,
@@ -142,12 +243,69 @@
       "vendor": "modelcontextprotocol",
       "tags": [
         "time",
-        "official"
-      ]
+        "official",
+        "timezone"
+      ],
+      "category": "official",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
+      "envSchema": [],
+      "notes": "沙箱需 python + uv（rootfs 内预装）。"
+    },
+    {
+      "name": "context7",
+      "description": "任何库/框架的最新文档实时检索（Upstash Context7）——对抗训练数据过时，直查现行版本文档。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "upstash",
+      "tags": [
+        "docs",
+        "coding",
+        "libraries"
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/upstash/context7",
+      "envSchema": [
+        {
+          "key": "CONTEXT7_API_KEY",
+          "required": false,
+          "description": "可选：更高配额（匿名亦可用）"
+        }
+      ],
+      "notes": "免沙箱远端形态见 context7-remote。"
+    },
+    {
+      "name": "context7-remote",
+      "description": "Context7 免沙箱远端形态：库文档实时检索的 HTTP 端点，无需 rootfs / npx，装好即连。",
+      "transport": "HTTP",
+      "url": "https://mcp.context7.com/mcp",
+      "env": {},
+      "runInSandbox": false,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": false,
+      "vendor": "upstash",
+      "tags": [
+        "docs",
+        "remote",
+        "libraries"
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/upstash/context7",
+      "envSchema": [],
+      "notes": "沙箱 npx 形态见 context7。"
     },
     {
       "name": "deepwiki",
-      "description": "DeepWiki MCP (remote, no sandbox needed) — ask questions about any GitHub repository using Devin's auto-generated wiki.",
+      "description": "DeepWiki 远端 MCP：就任意公开 GitHub 仓库直接提问（架构/实现/用法），免密钥即连的代码理解外脑。",
       "transport": "HTTP",
       "url": "https://mcp.deepwiki.com/mcp",
       "env": {},
@@ -155,12 +313,1120 @@
       "enabled": false,
       "scope": "all",
       "requiresRootfs": false,
-      "vendor": "cdnlify/deepwiki",
+      "vendor": "asyncfuncai",
       "tags": [
         "docs",
         "github",
         "remote"
-      ]
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/AsyncFuncAI/deepwiki-mcp",
+      "envSchema": [],
+      "notes": "免沙箱远端形态，零配置。"
+    },
+    {
+      "name": "microsoft-learn",
+      "description": "微软官方远端 MCP：检索 Microsoft/Azure 官方文档与代码示例（docs_search / code_sample_search / docs_fetch 三工具流），免密钥直连。",
+      "transport": "HTTP",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "env": {},
+      "runInSandbox": false,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": false,
+      "vendor": "microsoft",
+      "tags": [
+        "docs",
+        "azure",
+        "remote"
+      ],
+      "category": "docs",
+      "homepage": "https://learn.microsoft.com/azure/developer/azure-mcp/",
+      "envSchema": [],
+      "notes": "官方托管端点，流式 HTTP，零配置。"
+    },
+    {
+      "name": "paper-search",
+      "description": "学术论文检索服务器（node 形态）：arXiv / PubMed / bioRxiv 多源论文搜索与全文下载链接，写综述查文献的利器。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "paper-search-mcp-nodejs"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "open-science",
+      "tags": [
+        "research",
+        "arxiv",
+        "papers"
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/OpenSciHackathon/paper-search-mcp-nodejs",
+      "envSchema": [],
+      "notes": "无需 API Key，即装即用。"
+    },
+    {
+      "name": "brave-search",
+      "description": "Brave 搜索服务器：网页/新闻/图片搜索、安全分级与分页（已归档参考实现）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "web-search"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/brave-search",
+      "envSchema": [
+        {
+          "key": "BRAVE_API_KEY",
+          "required": true,
+          "description": "Brave Search API 密钥（brave.com/search/api 免费层每月 2000 次）"
+        }
+      ],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。"
+    },
+    {
+      "name": "duckduckgo",
+      "description": "DuckDuckGo 搜索服务器：完全免费无密钥的网页搜索",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "duckduckgo-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "duckduckgo",
+      "tags": [
+        "web-search"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/nickclyde/duckduckgo-mcp-server",
+      "envSchema": [],
+      "notes": "搜索类里唯一免密钥的选择，适合先跑通链路。"
+    },
+    {
+      "name": "exa",
+      "description": "Exa 搜索服务器：神经/关键词混合搜索与抓取，面向 AI Agent 优化",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "exa-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "exa-labs",
+      "tags": [
+        "web-search"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/exa-labs/exa-mcp-server",
+      "envSchema": [
+        {
+          "key": "EXA_API_KEY",
+          "required": true,
+          "description": "Exa API 密钥（exa.ai）"
+        }
+      ],
+      "notes": "npm 上的 exa-mcp-server（JS 实现；PyPI 无此包）。"
+    },
+    {
+      "name": "firecrawl",
+      "description": "Firecrawl 网页转 Markdown 服务：单页/整站爬取、JS 渲染、结构化抽取——把任意网页变成 LLM 可用的干净数据。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "firecrawl",
+      "tags": [
+        "web",
+        "scraping",
+        "crawl"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/firecrawl/firecrawl-mcp-server",
+      "envSchema": [
+        {
+          "key": "FIRECRAWL_API_KEY",
+          "required": true,
+          "description": "firecrawl.dev API Key（有免费额度）"
+        }
+      ],
+      "notes": "与 fetch 的区别：整站爬取 + JS 渲染 + 结构化抽取。"
+    },
+    {
+      "name": "kagi",
+      "description": "Kagi 搜索服务器：无广告隐私搜索与通用摘要器",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "kagimcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "kagi",
+      "tags": [
+        "web-search"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/kagisearch/kagimcp",
+      "envSchema": [
+        {
+          "key": "KAGI_API_KEY",
+          "required": true,
+          "description": "Kagi API 密钥（kagi.com，需付费订阅）"
+        }
+      ],
+      "notes": "包名 kagimcp（不是 @kagimcp/mcp-kagi）。"
+    },
+    {
+      "name": "tavily",
+      "description": "Tavily 搜索服务器：面向 LLM 的搜索与正文抽取、含原始内容分级",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "tavily-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "tavily",
+      "tags": [
+        "web-search"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/tavily-ai/tavily-mcp",
+      "envSchema": [
+        {
+          "key": "TAVILY_API_KEY",
+          "required": true,
+          "description": "Tavily API 密钥（tavily.com 每月 1000 次免费）"
+        }
+      ],
+      "notes": "Python 实现（uvx tavily-mcp，非 @tavily/mcp——后者已不存在）。"
+    },
+    {
+      "name": "browserbase",
+      "description": "Browserbase 云端浏览器：托管会话、快照、控制台日志，无需本地浏览器",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@browserbasehq/mcp-server-browserbase"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "browserbase",
+      "tags": [
+        "browser"
+      ],
+      "category": "browser",
+      "homepage": "https://github.com/browserbase/mcp-server-browserbase",
+      "envSchema": [
+        {
+          "key": "BROWSERBASE_API_KEY",
+          "required": true,
+          "description": "Browserbase API 密钥"
+        },
+        {
+          "key": "BROWSERBASE_PROJECT_ID",
+          "required": true,
+          "description": "Browserbase 项目 ID"
+        },
+        {
+          "key": "GEMINI_API_KEY",
+          "required": false,
+          "description": "可选：启用页面视觉理解（截图问答）"
+        }
+      ],
+      "notes": "浏览器跑在云上，沙箱内无需下载内核。"
+    },
+    {
+      "name": "chrome-devtools",
+      "description": "Chrome DevTools 服务器：驱动 Chrome 实例、抓取网络轨迹与性能数据",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp",
+        "--headless"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "google",
+      "tags": [
+        "browser"
+      ],
+      "category": "browser",
+      "homepage": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+      "envSchema": [],
+      "notes": "Google 官方维护；--headless 适配无显示器环境。"
+    },
+    {
+      "name": "playwright",
+      "description": "Playwright 浏览器自动化：导航/点击/填充/截图，基于无障碍树快照交互",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp",
+        "--headless"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "microsoft",
+      "tags": [
+        "browser"
+      ],
+      "category": "browser",
+      "homepage": "https://github.com/microsoft/playwright-mcp",
+      "envSchema": [],
+      "notes": "--headless 为无显示器沙箱的官方推荐形态；首次运行会下载浏览器内核。"
+    },
+    {
+      "name": "puppeteer",
+      "description": "Puppeteer 浏览器自动化：页面/框架/控制台求值（已归档参考实现）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "browser"
+      ],
+      "category": "browser",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/puppeteer",
+      "envSchema": [],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 新项目建议选 Playwright。"
+    },
+    {
+      "name": "dbhub",
+      "description": "DBHub 通用数据库网关：MySQL/PostgreSQL/SQLite/ClickHouse 等一套搞定",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--dsn",
+        "sqlite:///workspace/data.db"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "bytebase",
+      "tags": [
+        "database"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/bytebase/dbhub",
+      "envSchema": [],
+      "notes": "--dsn 换成 postgresql://… 或 mysql://… 即切换数据库类型。"
+    },
+    {
+      "name": "duckdb",
+      "description": "DuckDB MCP（MotherDuck 维护）：对本地/内存 DuckDB 跑分析 SQL——单文件 OLAP，CSV/Parquet 直接查询。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-duckdb",
+        "--db-path",
+        ":memory:"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "motherduck",
+      "tags": [
+        "database",
+        "olap",
+        "analytics"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/motherduckdb/mcp-server-duckdb",
+      "envSchema": [
+        {
+          "key": "motherduck_token",
+          "required": false,
+          "description": "可选：连接 MotherDuck 云端（md: 数据库）"
+        }
+      ],
+      "notes": "默认内存库；--db-path 可指到 /workspace 持久化文件。"
+    },
+    {
+      "name": "elasticsearch",
+      "description": "Elastic 官方 MCP：对 Elasticsearch 集群跑查询/聚合、管理索引与映射——日志与检索场景的直连通道。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@elastic/mcp-server-elasticsearch"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "elastic",
+      "tags": [
+        "database",
+        "search",
+        "observability"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/elastic/mcp-server-elasticsearch",
+      "envSchema": [
+        {
+          "key": "ES_URL",
+          "required": false,
+          "description": "集群地址（默认 http://localhost:9200）"
+        },
+        {
+          "key": "ES_API_KEY",
+          "required": false,
+          "description": "可选：Encoded API Key（无则匿名/基础认证）"
+        }
+      ],
+      "notes": "官方 npm 分发。"
+    },
+    {
+      "name": "mongodb",
+      "description": "MongoDB 官方 MCP：连接实例/Atlas，查集合、跑聚合管道、分析 schema 与索引。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mongodb-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "mongodb",
+      "tags": [
+        "database",
+        "nosql",
+        "atlas"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/mongodb-js/mongodb-mcp-server",
+      "envSchema": [
+        {
+          "key": "MDB_MCP_CONNECTION_STRING",
+          "required": true,
+          "description": "mongodb:// 或 mongodb+srv:// 连接串"
+        }
+      ],
+      "notes": "官方 npm 分发。"
+    },
+    {
+      "name": "motherduck",
+      "description": "MotherDuck 服务器：用 SQL 查询托管 DuckDB 数据库",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck",
+        "--db-path",
+        ":memory:"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "motherduck",
+      "tags": [
+        "database"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/motherduckdb/mcp-server-motherduck",
+      "envSchema": [
+        {
+          "key": "MOTHERDUCK_TOKEN",
+          "required": false,
+          "description": "可选：MotherDuck 访问令牌（本地 :memory: 库不需要）"
+        }
+      ],
+      "notes": "--db-path :memory: 即纯本地内存库，装好即用。"
+    },
+    {
+      "name": "neon",
+      "description": "Neon 官方 MCP：serverless Postgres 平台的项目/分支/表管理与时点恢复——分支即数据库的云原生玩法。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@neondatabase/mcp-server-neon"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "neondatabase",
+      "tags": [
+        "database",
+        "postgres",
+        "serverless"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/neondatabase/mcp-server-neon",
+      "envSchema": [
+        {
+          "key": "NEON_API_KEY",
+          "required": true,
+          "description": "console.neon.tech 生成的 API Key"
+        }
+      ],
+      "notes": "官方 npm 分发。"
+    },
+    {
+      "name": "postgres",
+      "description": "官方 PostgreSQL 服务器：schema 感知查询，默认只读（已归档参考实现）",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-postgres",
+        "postgresql://localhost:5432/mydb"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "database"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/postgres",
+      "envSchema": [],
+      "notes": "连接串是位置参数（无 POSTGRESQL_* 环境变量）；添加后请编辑命令替换。"
+    },
+    {
+      "name": "sqlite",
+      "description": "官方 SQLite 服务器：带 schema 感知的读写查询与分析",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "/workspace/data.db"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "database"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite",
+      "envSchema": [],
+      "notes": "官方 SQLite 是 Python 包（--db-path 指定库文件）。"
+    },
+    {
+      "name": "supabase",
+      "description": "Supabase 官方 MCP：项目管理、表结构/迁移、RLS 策略与 SQL 查询——serverless Postgres 全栈工作台。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "supabase",
+      "tags": [
+        "database",
+        "postgres",
+        "backend"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/supabase-community/supabase-mcp",
+      "envSchema": [
+        {
+          "key": "SUPABASE_ACCESS_TOKEN",
+          "required": true,
+          "description": "supabase.com 控制台生成的 Access Token"
+        },
+        {
+          "key": "SUPABASE_PROJECT_ID",
+          "required": false,
+          "description": "可选：直连某个项目，避免每次列出"
+        }
+      ],
+      "notes": "官方 npm 分发，token 走环境变量。"
+    },
+    {
+      "name": "git",
+      "description": "官方 Git 服务器：克隆/状态/差异/提交/分支/标签等仓库操作",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "/workspace"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "git"
+      ],
+      "category": "git",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+      "envSchema": [],
+      "notes": "--repository 指定仓库路径（沙箱内 /workspace）；Python 实现需 uv。"
+    },
+    {
+      "name": "gitlab",
+      "description": "GitLab 参考实现服务器：API 操作项目/议题/合并请求（已归档）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-gitlab"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "git"
+      ],
+      "category": "git",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/gitlab",
+      "envSchema": [
+        {
+          "key": "GITLAB_PERSONAL_ACCESS_TOKEN",
+          "required": true,
+          "description": "GitLab Personal Access Token"
+        }
+      ],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。"
+    },
+    {
+      "name": "server-github",
+      "description": "GitHub 参考实现服务器：REST API 操作仓库/议题/PR/文件（已归档）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "git"
+      ],
+      "category": "git",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/github",
+      "envSchema": [
+        {
+          "key": "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "required": true,
+          "description": "GitHub Personal Access Token"
+        }
+      ],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 无 Docker 时用它。"
+    },
+    {
+      "name": "cloudflare",
+      "description": "Cloudflare 官方远端 MCP：Workers/R2/DNS/审计日志（流式 HTTP 端点）",
+      "transport": "HTTP",
+      "url": "https://mcp.cloudflare.com/mcp",
+      "env": {},
+      "runInSandbox": false,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": false,
+      "vendor": "cloudflare",
+      "tags": [
+        "cloud"
+      ],
+      "category": "cloud",
+      "homepage": "https://github.com/cloudflare/mcp-server-cloudflare",
+      "envSchema": [],
+      "notes": "连接时按提示完成 OAuth 浏览器授权；npm 包形态已转向远端 Code Mode。"
+    },
+    {
+      "name": "kubernetes",
+      "description": "Kubernetes 服务器：Pod/部署/事件操作与 YAML 清单管理",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-kubernetes"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "flux159",
+      "tags": [
+        "cloud"
+      ],
+      "category": "cloud",
+      "homepage": "https://github.com/Flux159/mcp-server-kubernetes",
+      "envSchema": [],
+      "notes": "默认读 ~/.kube/config；沙箱内需把配置挂载进 rootfs。"
+    },
+    {
+      "name": "grafana",
+      "description": "Grafana 服务器：仪表盘/数据源/健康检查",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-grafana"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "grafana",
+      "tags": [
+        "observability"
+      ],
+      "category": "observability",
+      "homepage": "https://github.com/grafana/mcp-grafana",
+      "envSchema": [
+        {
+          "key": "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+          "required": true,
+          "description": "Grafana 服务账户令牌（旧 GRAFANA_API_KEY 已弃用）"
+        },
+        {
+          "key": "GRAFANA_URL",
+          "required": false,
+          "description": "可选：实例地址（默认 http://localhost:3000）"
+        }
+      ],
+      "notes": "PyPI 包名 mcp-grafana（uvx 直跑）。"
+    },
+    {
+      "name": "sentry",
+      "description": "Sentry 服务器：议题/事件/堆栈/性能指标查询",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sentry/mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "sentry",
+      "tags": [
+        "observability"
+      ],
+      "category": "observability",
+      "homepage": "https://github.com/getsentry/sentry-mcp",
+      "envSchema": [
+        {
+          "key": "SENTRY_ACCESS_TOKEN",
+          "required": true,
+          "description": "Sentry 访问令牌（auth token，不是旧版 API key）"
+        }
+      ],
+      "notes": "官方 npm 包是 @sentry/mcp-server；环境变量 SENTRY_ACCESS_TOKEN。"
+    },
+    {
+      "name": "linear",
+      "description": "Linear 远端 MCP：议题/项目/周期（OAuth 授权）",
+      "transport": "HTTP",
+      "url": "https://mcp.linear.app/mcp",
+      "env": {},
+      "runInSandbox": false,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": false,
+      "vendor": "linear",
+      "tags": [
+        "productivity"
+      ],
+      "category": "productivity",
+      "homepage": "https://mcp.linear.app",
+      "envSchema": [],
+      "notes": "2025 起官方推荐流式 HTTP /mcp 端点（旧 /sse 已下线）。"
+    },
+    {
+      "name": "notion",
+      "description": "Notion 服务器：搜索与编辑页面/块（官方 API）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@notionhq/notion-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "notion",
+      "tags": [
+        "productivity"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/makenotion/notion-mcp-server",
+      "envSchema": [
+        {
+          "key": "OPENAPI_MCP_HEADERS",
+          "required": true,
+          "description": "JSON 头：{\"Authorization\":\"Bearer ntn_...\",\"Notion-Version\":\"2025-09-03\"}"
+        }
+      ],
+      "notes": "Authorization 与 Notion-Version 打包在同一个 JSON 环境变量里。"
+    },
+    {
+      "name": "obsidian",
+      "description": "Obsidian 服务器：经 Local REST API 读取/搜索本地知识库笔记",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-obsidian"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "obsidian",
+      "tags": [
+        "productivity"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/MarkusPfundstein/mcp-obsidian",
+      "envSchema": [
+        {
+          "key": "OBSIDIAN_API_KEY",
+          "required": true,
+          "description": "Obsidian Local REST API 插件密钥"
+        }
+      ],
+      "notes": "手机需与电脑同网段，且装好 Local REST API 社区插件。"
+    },
+    {
+      "name": "commands",
+      "description": "任意命令执行服务器（g0t4 维护，高风险，务必在沙箱内跑）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-commands"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "g0t4",
+      "tags": [
+        "desktop"
+      ],
+      "category": "desktop",
+      "homepage": "https://github.com/g0t4/mcp-server-commands",
+      "envSchema": [],
+      "notes": "npm 无 scope 的 mcp-server-commands；建议只在沙箱启用。"
+    },
+    {
+      "name": "desktop-commander",
+      "description": "桌面指挥官：终端命令执行、进程与文件管理（高权限）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@wonderwhy-er/desktop-commander"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "wonderwhy-er",
+      "tags": [
+        "desktop"
+      ],
+      "category": "desktop",
+      "homepage": "https://github.com/wonderwhy-er/DesktopCommanderMCP",
+      "envSchema": [],
+      "notes": "包名 @wonderwhy-er/desktop-commander（不带 -mcp 后缀）。"
+    },
+    {
+      "name": "stripe",
+      "description": "Stripe 服务器：客户/发票/订阅等 API 操作",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@stripe/mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "stripe",
+      "tags": [
+        "finance"
+      ],
+      "category": "finance",
+      "homepage": "https://github.com/stripe/agent-toolkit",
+      "envSchema": [
+        {
+          "key": "STRIPE_SECRET_KEY",
+          "required": true,
+          "description": "Stripe 密钥（sk_ 开头，建议测试模式）"
+        }
+      ],
+      "notes": "会真实调用计费 API；强烈建议只用测试模式密钥。"
+    },
+    {
+      "name": "figma-context",
+      "description": "Figma 上下文服务器：抽取布局/样式供 AI 生成代码",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "figma-developer-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "glideapps",
+      "tags": [
+        "design"
+      ],
+      "category": "design",
+      "homepage": "https://github.com/GLips/Figma-Context-MCP",
+      "envSchema": [
+        {
+          "key": "FIGMA_API_KEY",
+          "required": true,
+          "description": "Figma 个人访问令牌（也可用 --figma-api-key= 参数）"
+        }
+      ],
+      "notes": "get_figma_data 取结构，建议配合 Coding 工位使用。"
+    },
+    {
+      "name": "server-slack",
+      "description": "Slack 参考实现服务器：频道/消息/用户（已归档）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-slack"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "communication"
+      ],
+      "category": "communication",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/slack",
+      "envSchema": [
+        {
+          "key": "SLACK_BOT_TOKEN",
+          "required": true,
+          "description": "Slack Bot User OAuth Token（xoxb- 开头）"
+        },
+        {
+          "key": "SLACK_TEAM_ID",
+          "required": true,
+          "description": "Slack 团队 ID（T 开头）"
+        },
+        {
+          "key": "SLACK_CHANNEL_IDS",
+          "required": false,
+          "description": "可选：逗号分隔限定可访问频道"
+        }
+      ],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 托管远端形态见 remote/slack-remote。"
+    },
+    {
+      "name": "slack-remote",
+      "description": "Slack 官方远端 MCP：消息/频道（OAuth 授权）",
+      "transport": "HTTP",
+      "url": "https://mcp.slack.com/mcp",
+      "env": {},
+      "runInSandbox": false,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": false,
+      "vendor": "slack",
+      "tags": [
+        "communication"
+      ],
+      "category": "communication",
+      "homepage": "https://api.slack.com/mcp",
+      "envSchema": [],
+      "notes": "官方托管形态，无需本地进程与令牌配置。"
+    },
+    {
+      "name": "amap",
+      "description": "高德地图官方 MCP：地理编码/逆地理/POI 搜索/路线规划（驾车/步行/公交）/天气查询——中文地点与国内出行场景首选。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@amap/amap-maps-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "amap",
+      "tags": [
+        "maps",
+        "china",
+        "routing"
+      ],
+      "category": "location",
+      "homepage": "https://lbs.amap.com/api/mcp-server/gettingstarted",
+      "envSchema": [
+        {
+          "key": "AMAP_MAPS_API_KEY",
+          "required": true,
+          "description": "高德开放平台 Web 服务 Key（lbs.amap.com 免费申请）"
+        }
+      ],
+      "notes": "国内地图场景对 google-maps 的互补。"
+    },
+    {
+      "name": "google-maps",
+      "description": "Google 地图服务器：地理编码/路线/地点搜索（已归档参考实现）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-google-maps"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "location"
+      ],
+      "category": "location",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/google-maps",
+      "envSchema": [
+        {
+          "key": "GOOGLE_MAPS_API_KEY",
+          "required": true,
+          "description": "Google Maps Platform API 密钥"
+        }
+      ],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。"
+    },
+    {
+      "name": "gdrive",
+      "description": "Google Drive 服务器：搜索与读取云盘文件（已归档参考实现）",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-gdrive"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "data"
+      ],
+      "category": "data",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/gdrive",
+      "envSchema": [
+        {
+          "key": "GDRIVE_CREDENTIALS_PATH",
+          "required": true,
+          "description": "OAuth 凭据 credentials.json 的沙箱内路径"
+        }
+      ],
+      "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 需先把 Google Cloud OAuth 凭据文件放进沙箱。"
     }
   ]
 }
