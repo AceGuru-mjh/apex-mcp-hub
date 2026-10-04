@@ -1,8 +1,8 @@
 {
   "schema": "apex-mcp-hub-v1",
   "name": "Apex MCP Hub",
-  "description": "Apex Agent official MCP server repository — 50 verified servers across 15 categories (sandbox npx/uvx + hosted remote HTTP), installable on demand from the in-app Market.",
-  "count": 50,
+  "description": "Apex Agent official MCP server repository — 80 verified servers across 18 categories (sandbox npx/uvx + hosted remote HTTP), installable on demand from the in-app Market.",
+  "count": 80,
   "categories": {
     "official": {
       "label": "官方参考实现",
@@ -10,11 +10,11 @@
     },
     "docs": {
       "label": "文档与知识",
-      "count": 5
+      "count": 8
     },
     "web-search": {
       "label": "网络搜索",
-      "count": 6
+      "count": 7
     },
     "browser": {
       "label": "浏览器自动化",
@@ -22,7 +22,7 @@
     },
     "database": {
       "label": "数据库",
-      "count": 9
+      "count": 15
     },
     "git": {
       "label": "Git 与代码托管",
@@ -30,15 +30,15 @@
     },
     "cloud": {
       "label": "云平台",
-      "count": 2
+      "count": 4
     },
     "observability": {
       "label": "可观测性",
-      "count": 2
+      "count": 4
     },
     "productivity": {
       "label": "效率工具",
-      "count": 3
+      "count": 9
     },
     "desktop": {
       "label": "桌面控制",
@@ -50,11 +50,11 @@
     },
     "design": {
       "label": "设计",
-      "count": 1
+      "count": 3
     },
     "communication": {
       "label": "通信协作",
-      "count": 2
+      "count": 3
     },
     "location": {
       "label": "地图位置",
@@ -63,6 +63,18 @@
     "data": {
       "label": "数据源",
       "count": 1
+    },
+    "devtools": {
+      "label": "开发效率",
+      "count": 5
+    },
+    "security": {
+      "label": "安全",
+      "count": 1
+    },
+    "ai-ml": {
+      "label": "人工智能",
+      "count": 1
     }
   },
   "changelog": [
@@ -70,6 +82,11 @@
       "version": "2.0.0",
       "date": "2026-10-03",
       "notes": "v2 重组：并入 Android-Guru-Agent 内置 mcp_catalog 32 台（APK 不再随包分发）；修复 fetch/time 指向不存在 npm 包的问题；新增 microsoft-learn/context7-remote/amap/firecrawl/paper-search/mongodb/supabase/duckdb/neon/elasticsearch 十台（端点与包名逐一经 npm/PyPI/HTTP 握手验证）；全目录按 15 类分类（category 字段，前向兼容）。"
+    },
+    {
+      "version": "2.1.0",
+      "date": "2026-10-04",
+      "notes": "v2.1.0 扩容：+30 台 → 80 台，主题「编码与完成复杂任务」（编码/开发相关 18 台：数据库 6、云 2、可观测性 2、文档 3、开发效率 5）。新增 devtools/security/ai-ml 三类（15 → 18 类）。30 台全部实测验证：npm/PyPI 包逐一经 registry 确认存在（HTTP 200），首页仓库逐一可达；候选池中 9 个名称未过验证或已弃用（@redis/mcp-redis、@clickhouse/mcp-server、@neo4j/neo4j-mcp-server、@snyk/mcp-server、ansible-doc-mcp-server、memgraph-mcp-server、arangodb-mcp-server、mcp.quickchart.io 端点、hf-mcp 非 HuggingFace）——分别换用官方等价包（redis-mcp-server / mcp-neo4j-cypher / @gongrzhe/quickchart-mcp-server 等）或淘汰；awslabs 弃用包（cdk/terraform/cost-explorer）换用活跃后继（aws-iac / aws-billing）；mcp-pandoc 与 mcp-server-semgrep、blender 需 rootfs 内预装 pandoc/semgrep CLI 或外部Blender 实例，已在 notes 标注。"
     }
   ],
   "servers": [
@@ -252,6 +269,62 @@
       "notes": "沙箱需 python + uv（rootfs 内预装）。"
     },
     {
+      "name": "arxiv",
+      "description": "arXiv 论文检索 MCP：多条件检索、下载 PDF 到本地文献库、提取全文与参考文献，配合 Semantic Scholar 引用增强——写综述、追新论文与深读文献的科研工作流。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "arxiv-mcp-server",
+        "--storage-path",
+        "/workspace/arxiv"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "blazickjp",
+      "tags": [
+        "docs",
+        "research",
+        "papers"
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/blazickjp/arxiv-mcp-server",
+      "envSchema": [
+        {
+          "key": "SEMANTIC_SCHOLAR_API_KEY",
+          "required": false,
+          "description": "可选：引用数据增强（不配则跳过）"
+        }
+      ],
+      "notes": "论文 PDF 存放在 --storage-path（默认沙箱 /workspace/arxiv）。"
+    },
+    {
+      "name": "aws-docs",
+      "description": "AWS 官方文档 MCP（awslabs）：搜索 AWS 官方文档、整页转 Markdown 精读、大表格按行过滤（服务配额/定价），并附相关文档推荐——云开发查文档不必离开对话窗口。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "awslabs.aws-documentation-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "awslabs",
+      "tags": [
+        "docs",
+        "aws",
+        "reference"
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/awslabs/mcp/tree/main/src/aws-documentation-mcp-server",
+      "envSchema": [],
+      "notes": "免密钥即用；与 microsoft-learn 同为厂商官方文档直连。"
+    },
+    {
       "name": "context7",
       "description": "任何库/框架的最新文档实时检索（Upstash Context7）——对抗训练数据过时，直查现行版本文档。",
       "transport": "STDIO",
@@ -369,6 +442,37 @@
       "homepage": "https://github.com/OpenSciHackathon/paper-search-mcp-nodejs",
       "envSchema": [],
       "notes": "无需 API Key，即装即用。"
+    },
+    {
+      "name": "wikipedia",
+      "description": "维基百科 MCP：搜索条目、读摘要与全文、定位章节、查多语言版本与相邻页面，摘要与全文可分段返回——事实核查、背景调研与知识问答的免费数据源，无需任何密钥即装即用。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cyanheads/wikipedia-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "cyanheads",
+      "tags": [
+        "docs",
+        "encyclopedia",
+        "research"
+      ],
+      "category": "docs",
+      "homepage": "https://github.com/cyanheads/wikipedia-mcp-server",
+      "envSchema": [
+        {
+          "key": "WIKIPEDIA_USER_AGENT",
+          "required": false,
+          "description": "可选：自定义 User-Agent（默认已内置）"
+        }
+      ],
+      "notes": "REST API 免鉴权，零配置即装即用。"
     },
     {
       "name": "brave-search",
@@ -510,6 +614,52 @@
       "notes": "包名 kagimcp（不是 @kagimcp/mcp-kagi）。"
     },
     {
+      "name": "omnisearch",
+      "description": "聚合搜索 MCP（spences10）：一套工具横跨 Tavily / Brave / Kagi / Exa 等多家搜索供应商——配了谁的 Key 就用谁，没配的自动跳过——搜索降级与冗余的一站式方案。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-omnisearch"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "spences10",
+      "tags": [
+        "web-search",
+        "aggregator",
+        "multi-provider"
+      ],
+      "category": "web-search",
+      "homepage": "https://github.com/spences10/mcp-omnisearch",
+      "envSchema": [
+        {
+          "key": "TAVILY_API_KEY",
+          "required": false,
+          "description": "可选：Tavily 密钥（任配其一）"
+        },
+        {
+          "key": "BRAVE_API_KEY",
+          "required": false,
+          "description": "可选：Brave Search 密钥"
+        },
+        {
+          "key": "KAGI_API_KEY",
+          "required": false,
+          "description": "可选：Kagi 密钥"
+        },
+        {
+          "key": "EXA_API_KEY",
+          "required": false,
+          "description": "可选：Exa 密钥"
+        }
+      ],
+      "notes": "至少配置一家供应商密钥，未配置的供应商自动跳过。"
+    },
+    {
       "name": "tavily",
       "description": "Tavily 搜索服务器：面向 LLM 的搜索与正文抽取、含原始内容分级",
       "transport": "STDIO",
@@ -648,6 +798,92 @@
       "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 新项目建议选 Playwright。"
     },
     {
+      "name": "astra-db",
+      "description": "DataStax 官方 Astra DB MCP：连接无服务器 Cassandra 云库，建键空间、跑 CQL、向量检索与表结构自动生成一条龙——生产级 NoSQL 后端的完整工作台。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@datastax/astra-db-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "datastax",
+      "tags": [
+        "database",
+        "cassandra",
+        "serverless"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/datastax/astra-db-mcp",
+      "envSchema": [
+        {
+          "key": "ASTRA_DB_APPLICATION_TOKEN",
+          "required": true,
+          "description": "Astra DB 应用令牌（控制台生成）"
+        },
+        {
+          "key": "ASTRA_DB_API_ENDPOINT",
+          "required": true,
+          "description": "数据库 API 端点（https://….apps.astra.datastax.com）"
+        },
+        {
+          "key": "ASTRA_DB_KEYSPACE",
+          "required": false,
+          "description": "可选：默认键空间"
+        }
+      ],
+      "notes": "令牌与端点都在 Astra 控制台项目页获取。"
+    },
+    {
+      "name": "chroma",
+      "description": "Chroma 官方向量数据库 MCP：本地持久 / 远程 HTTP / 云端三种客户端模式，集合与文档管理、语义检索、可插拔嵌入函数——轻量 RAG 与 Agent 记忆的零门槛方案。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "chroma-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "chroma-core",
+      "tags": [
+        "database",
+        "vector",
+        "embeddings"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/chroma-core/chroma-mcp",
+      "envSchema": [
+        {
+          "key": "CHROMA_CLIENT_TYPE",
+          "required": false,
+          "description": "可选：http / cloud / persistent / ephemeral（默认内存模式）"
+        },
+        {
+          "key": "CHROMA_DATA_DIR",
+          "required": false,
+          "description": "可选：本地持久模式数据目录（建议 /workspace 下）"
+        },
+        {
+          "key": "CHROMA_HOST",
+          "required": false,
+          "description": "可选：远程/云模式主机地址"
+        },
+        {
+          "key": "CHROMA_API_KEY",
+          "required": false,
+          "description": "可选：Chroma Cloud 密钥"
+        }
+      ],
+      "notes": "持久化建议 CHROMA_CLIENT_TYPE=persistent 并把数据目录放进 /workspace。"
+    },
+    {
       "name": "dbhub",
       "description": "DBHub 通用数据库网关：MySQL/PostgreSQL/SQLite/ClickHouse 等一套搞定",
       "transport": "STDIO",
@@ -741,6 +977,47 @@
       "notes": "官方 npm 分发。"
     },
     {
+      "name": "influxdb",
+      "description": "InfluxData 官方 InfluxDB 3 MCP：查询时序数据、管理数据库与令牌，内置按需查询机制控制返回量——IoT 指标、监控时序与行情数据的对话式分析通道。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@influxdata/influxdb3-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "influxdata",
+      "tags": [
+        "database",
+        "time-series",
+        "iot"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/influxdata/influxdb3_mcp_server",
+      "envSchema": [
+        {
+          "key": "INFLUX_DB_TOKEN",
+          "required": true,
+          "description": "数据库令牌（Cloud Serverless 为 apiv3_… 格式）"
+        },
+        {
+          "key": "INFLUX_DB_INSTANCE_URL",
+          "required": false,
+          "description": "可选：Core/Enterprise 实例地址"
+        },
+        {
+          "key": "INFLUX_DB_ACCOUNT_ID",
+          "required": false,
+          "description": "可选：Cloud Dedicated 认证用账号 ID"
+        }
+      ],
+      "notes": "官方 npm 分发；Cloud Dedicated/Clustered 用账号 ID+集群 ID 组合认证。"
+    },
+    {
       "name": "mongodb",
       "description": "MongoDB 官方 MCP：连接实例/Atlas，查集合、跑聚合管道、分析 schema 与索引。",
       "transport": "STDIO",
@@ -802,6 +1079,51 @@
       "notes": "--db-path :memory: 即纯本地内存库，装好即用。"
     },
     {
+      "name": "neo4j",
+      "description": "Neo4j 图数据库 MCP：执行 Cypher 查询、探索图 schema 与节点关系，支持只读模式与响应截断控量——知识图谱、关系网络与社交/风控图谱分析的对话式入口。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-cypher"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "neo4j-contrib",
+      "tags": [
+        "database",
+        "graph",
+        "cypher"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/neo4j-contrib/mcp-neo4j",
+      "envSchema": [
+        {
+          "key": "NEO4J_URL",
+          "required": true,
+          "description": "数据库地址（bolt:// 或 neo4j://）"
+        },
+        {
+          "key": "NEO4J_USERNAME",
+          "required": true,
+          "description": "用户名（默认 neo4j）"
+        },
+        {
+          "key": "NEO4J_PASSWORD",
+          "required": true,
+          "description": "密码"
+        },
+        {
+          "key": "NEO4J_DATABASE",
+          "required": false,
+          "description": "可选：指定数据库"
+        }
+      ],
+      "notes": "Neo4j 官方团队维护；加 --read-only 参数可锁定只读。"
+    },
+    {
       "name": "neon",
       "description": "Neon 官方 MCP：serverless Postgres 平台的项目/分支/表管理与时点恢复——分支即数据库的云原生玩法。",
       "transport": "STDIO",
@@ -854,6 +1176,78 @@
       "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/postgres",
       "envSchema": [],
       "notes": "连接串是位置参数（无 POSTGRESQL_* 环境变量）；添加后请编辑命令替换。"
+    },
+    {
+      "name": "qdrant",
+      "description": "Qdrant 官方向量数据库 MCP：集合管理、向量写入与语义检索，内置 fastembed 本地嵌入——为 Agent 补上长期记忆与 RAG 检索的存储底座，云端本地双形态。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-server-qdrant"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "qdrant",
+      "tags": [
+        "database",
+        "vector",
+        "rag"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/qdrant/mcp-server-qdrant",
+      "envSchema": [
+        {
+          "key": "QDRANT_URL",
+          "required": true,
+          "description": "Qdrant 地址（https://…:6333 或本地实例）"
+        },
+        {
+          "key": "QDRANT_API_KEY",
+          "required": false,
+          "description": "可选：Qdrant Cloud 托管必填"
+        },
+        {
+          "key": "EMBEDDING_PROVIDER",
+          "required": false,
+          "description": "可选：嵌入提供方（默认 fastembed 本地嵌入）"
+        }
+      ],
+      "notes": "本地嵌入自动拉取 fastembed 模型；云托管需 API Key。"
+    },
+    {
+      "name": "redis",
+      "description": "Redis 官方 MCP：直连 Redis / Redis Cloud 执行命令、扫描键空间、读写五大数据结构并解释命令语义——缓存排查、会话存储检查与队列调试场景的直连通道。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "redis-mcp-server",
+        "--url",
+        "redis://localhost:6379/0"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "redis",
+      "tags": [
+        "database",
+        "cache",
+        "kv"
+      ],
+      "category": "database",
+      "homepage": "https://github.com/redis/mcp-redis",
+      "envSchema": [
+        {
+          "key": "REDIS_URL",
+          "required": false,
+          "description": "可选：redis:// 连接串（与 --url 参数二选一）"
+        }
+      ],
+      "notes": "官方 Python 形态（redis/mcp-redis 仓库 → PyPI redis-mcp-server）。"
     },
     {
       "name": "sqlite",
@@ -998,6 +1392,81 @@
       "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 无 Docker 时用它。"
     },
     {
+      "name": "aws-billing",
+      "description": "AWS 官方账单与成本管理 MCP（awslabs）：Cost Explorer 成本分析、预算监控、免费额度用量追踪与成本异常检测——云上项目控成本、防超额的财务管家。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "awslabs.billing-cost-management-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "awslabs",
+      "tags": [
+        "cloud",
+        "cost",
+        "billing"
+      ],
+      "category": "cloud",
+      "homepage": "https://github.com/awslabs/mcp/tree/main/src/billing-cost-management-mcp-server",
+      "envSchema": [
+        {
+          "key": "AWS_ACCESS_KEY_ID",
+          "required": false,
+          "description": "AWS 访问密钥（或走标准凭据链/profile）"
+        },
+        {
+          "key": "AWS_SECRET_ACCESS_KEY",
+          "required": false,
+          "description": "AWS 私有访问密钥"
+        },
+        {
+          "key": "AWS_REGION",
+          "required": false,
+          "description": "可选：账单 API 区域（如 us-east-1）"
+        }
+      ],
+      "notes": "取代已弃用的 cost-explorer-mcp-server；需具备账单只读权限的 IAM 凭据。"
+    },
+    {
+      "name": "aws-iac",
+      "description": "AWS 官方 IaC MCP（awslabs）：CloudFormation 模板校验与安全合规检查、部署失败智能诊断、CDK 文档与代码样例检索——云基础设施即代码的开发与排障助手。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "awslabs.aws-iac-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "awslabs",
+      "tags": [
+        "cloud",
+        "iac",
+        "cloudformation"
+      ],
+      "category": "cloud",
+      "homepage": "https://github.com/awslabs/mcp/tree/main/src/aws-iac-mcp-server",
+      "envSchema": [
+        {
+          "key": "AWS_PROFILE",
+          "required": false,
+          "description": "可选：AWS 凭据 profile（文档检索免鉴权）"
+        },
+        {
+          "key": "AWS_REGION",
+          "required": false,
+          "description": "可选：默认区域"
+        }
+      ],
+      "notes": "取代已弃用的 cdk-mcp-server；文档类工具免凭据，部署排障需 AWS 凭据。"
+    },
+    {
       "name": "cloudflare",
       "description": "Cloudflare 官方远端 MCP：Workers/R2/DNS/审计日志（流式 HTTP 端点）",
       "transport": "HTTP",
@@ -1039,6 +1508,42 @@
       "notes": "默认读 ~/.kube/config；沙箱内需把配置挂载进 rootfs。"
     },
     {
+      "name": "datadog",
+      "description": "Datadog 全域观测 MCP：查询指标、日志、APM 追踪、监控器与事件流，跨区域站点（com/eu）可切换——SRE 值班排障、线上问题定位与告警根因分析的统一观测台。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "datadog-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "geli2001",
+      "tags": [
+        "observability",
+        "logs",
+        "apm"
+      ],
+      "category": "observability",
+      "homepage": "https://github.com/GeLi2001/datadog-mcp-server",
+      "envSchema": [
+        {
+          "key": "DD_API_KEY",
+          "required": true,
+          "description": "Datadog API Key"
+        },
+        {
+          "key": "DD_APP_KEY",
+          "required": false,
+          "description": "Datadog Application Key（日志/监控器等高级 API 需要）"
+        }
+      ],
+      "notes": "社区实现（GeLi2001）走官方 API；欧盟站加 --site=datadoghq.eu。"
+    },
+    {
       "name": "grafana",
       "description": "Grafana 服务器：仪表盘/数据源/健康检查",
       "transport": "STDIO",
@@ -1072,6 +1577,37 @@
       "notes": "PyPI 包名 mcp-grafana（uvx 直跑）。"
     },
     {
+      "name": "prometheus",
+      "description": "Prometheus 监控 MCP：执行 PromQL 即时与范围查询、列出指标名与元数据、检查告警规则与服务发现状态——SRE 值班、服务可观测性与容量规划的对话式分析入口。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-prometheus"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "jeanlopezxyz",
+      "tags": [
+        "observability",
+        "promql",
+        "metrics"
+      ],
+      "category": "observability",
+      "homepage": "https://github.com/jeanlopezxyz/mcp-prometheus",
+      "envSchema": [
+        {
+          "key": "PROMETHEUS_URL",
+          "required": true,
+          "description": "Prometheus API 地址（如 http://prometheus:9090）"
+        }
+      ],
+      "notes": "也支持 --namespace/--service 参数走 K8s 服务发现直连。"
+    },
+    {
       "name": "sentry",
       "description": "Sentry 服务器：议题/事件/堆栈/性能指标查询",
       "transport": "STDIO",
@@ -1099,6 +1635,94 @@
         }
       ],
       "notes": "官方 npm 包是 @sentry/mcp-server；环境变量 SENTRY_ACCESS_TOKEN。"
+    },
+    {
+      "name": "atlassian",
+      "description": "Atlassian MCP：一套服务器通吃 Jira 与 Confluence——搜索/创建/编辑议题、评论、页面与空间，Cloud 与 Data Center 双形态——敏捷团队的工单与文档中台。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-atlassian"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "sooperset",
+      "tags": [
+        "productivity",
+        "jira",
+        "confluence"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/sooperset/mcp-atlassian",
+      "envSchema": [
+        {
+          "key": "JIRA_URL",
+          "required": false,
+          "description": "Jira 地址（Cloud 为 https://xxx.atlassian.net；只用 Confluence 可不填）"
+        },
+        {
+          "key": "JIRA_USERNAME",
+          "required": false,
+          "description": "Jira Cloud 登录邮箱"
+        },
+        {
+          "key": "JIRA_API_TOKEN",
+          "required": false,
+          "description": "Jira API 令牌（atlassian.com 账号安全页生成）"
+        },
+        {
+          "key": "CONFLUENCE_URL",
+          "required": false,
+          "description": "Confluence 地址（Cloud 为 https://xxx.atlassian.net/wiki）"
+        },
+        {
+          "key": "CONFLUENCE_USERNAME",
+          "required": false,
+          "description": "Confluence Cloud 登录邮箱"
+        },
+        {
+          "key": "CONFLUENCE_API_TOKEN",
+          "required": false,
+          "description": "Confluence API 令牌"
+        }
+      ],
+      "notes": "Cloud 认证 = 邮箱 + API Token；Data Center 用 PAT（JIRA_PERSONAL_TOKEN）。"
+    },
+    {
+      "name": "excel",
+      "description": "Excel 工作簿 MCP（Haris Musa）：免装 Office 创建/读取/编辑 xlsx——公式、格式、数据校验与图表全套操作，--allow-dir 限定工作目录——报表生成与数据整理自动化。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "excel-mcp-server",
+        "stdio",
+        "--allow-dir",
+        "/workspace"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "haris-musa",
+      "tags": [
+        "productivity",
+        "excel",
+        "xlsx"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/haris-musa/excel-mcp-server",
+      "envSchema": [
+        {
+          "key": "EXCEL_FILES_PATH",
+          "required": false,
+          "description": "可选：与 --allow-dir 等价的环境变量形式"
+        }
+      ],
+      "notes": "uvx 形态需带 stdio 子命令；工作簿默认限制在 /workspace。"
     },
     {
       "name": "linear",
@@ -1178,6 +1802,116 @@
       "notes": "手机需与电脑同网段，且装好 Local REST API 社区插件。"
     },
     {
+      "name": "office-word",
+      "description": "Word 文档 MCP（GongRzhe）：创建与编辑 .docx——段落/表格/图片/页眉页脚全支持，内置专业排版模板与样式套用——合同、报告与公文的自动化生成流水线。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "office-word-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "gongrzhe",
+      "tags": [
+        "productivity",
+        "word",
+        "docx"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/GongRzhe/Office-Word-MCP-Server",
+      "envSchema": [],
+      "notes": "与 excel 组成 Office 文档双件套，免装 Office 原生读写。"
+    },
+    {
+      "name": "pandoc",
+      "description": "Pandoc 文档转换 MCP：Markdown / HTML / Word / PPTX / PDF 等数十种格式互转，支持 Mermaid 图渲染与参考文档模板——报告交付与格式迁移的瑞士军刀。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-pandoc"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "vivekvells",
+      "tags": [
+        "productivity",
+        "documents",
+        "conversion"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/vivekVells/mcp-pandoc",
+      "envSchema": [],
+      "notes": "需 rootfs 内预装 pandoc CLI（apt install pandoc）后工具才可用。"
+    },
+    {
+      "name": "shrimp-task-manager",
+      "description": "Shrimp 任务管理 MCP：专为 AI Agent 设计的链式任务管理——思维链拆解、任务反思与风格协商三件套，任务状态跨会话持久化——长程复杂任务的自我编排器。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-shrimp-task-manager"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "cjo4m06",
+      "tags": [
+        "productivity",
+        "planning",
+        "agent"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/cjo4m06/mcp-shrimp-task-manager",
+      "envSchema": [
+        {
+          "key": "DATA_DIR",
+          "required": false,
+          "description": "可选：任务数据目录（绝对路径优先，默认 ./shrimp-data）"
+        }
+      ],
+      "notes": "建议 DATA_DIR 指到 /workspace 下以便沙箱内持久化。"
+    },
+    {
+      "name": "todoist",
+      "description": "Todoist 官方 MCP：自然语言管理任务——创建任务与项目、设截止日期与优先级、按过滤器批量查询、批量完成与移动——把待办清单变成 Agent 可直接调度的执行面板。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@doist/todoist-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "doist",
+      "tags": [
+        "productivity",
+        "tasks",
+        "todo"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/Doist/todoist-mcp",
+      "envSchema": [
+        {
+          "key": "TODOIST_API_KEY",
+          "required": true,
+          "description": "Todoist API 密钥（设置 → 集成 页生成）"
+        }
+      ],
+      "notes": "官方 npm 分发（Doist）；另有托管远端 ai.todoist.net/mcp（OAuth）。"
+    },
+    {
       "name": "commands",
       "description": "任意命令执行服务器（g0t4 维护，高风险，务必在沙箱内跑）",
       "transport": "STDIO",
@@ -1253,6 +1987,41 @@
       "notes": "会真实调用计费 API；强烈建议只用测试模式密钥。"
     },
     {
+      "name": "blender",
+      "description": "Blender 3D 创作 MCP（ahujasid）：场景创建与修改、Python 脚本注入执行、文生 3D 资产生成——Agent 直接驱动桌面端 Blender 建模、材质与渲染。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-for-blender"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "ahujasid",
+      "tags": [
+        "design",
+        "3d",
+        "blender"
+      ],
+      "category": "design",
+      "homepage": "https://github.com/ahujasid/blender-mcp",
+      "envSchema": [
+        {
+          "key": "BLENDER_HOST",
+          "required": false,
+          "description": "可选：Blender 所在机器地址（默认 localhost）"
+        },
+        {
+          "key": "BLENDER_PORT",
+          "required": false,
+          "description": "可选：Blender 插件端口（默认 9876）"
+        }
+      ],
+      "notes": "需桌面端 Blender 安装配套插件；沙箱内用 BLENDER_HOST 连局域网机器。"
+    },
+    {
       "name": "figma-context",
       "description": "Figma 上下文服务器：抽取布局/样式供 AI 生成代码",
       "transport": "STDIO",
@@ -1280,6 +2049,62 @@
         }
       ],
       "notes": "get_figma_data 取结构，建议配合 Coding 工位使用。"
+    },
+    {
+      "name": "quickchart",
+      "description": "QuickChart 图表生成 MCP（GongRzhe）：用 Chart.js 语法描述即得 PNG 图表 URL——柱状/折线/饼图/雷达随手出图，无需本地渲染环境——数据报告与可视化的最短路径。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@gongrzhe/quickchart-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "gongrzhe",
+      "tags": [
+        "design",
+        "charts",
+        "visualization"
+      ],
+      "category": "design",
+      "homepage": "https://github.com/GongRzhe/Quickchart-MCP-Server",
+      "envSchema": [],
+      "notes": "图表由 quickchart.io 云端渲染，免密钥。"
+    },
+    {
+      "name": "gmail-autoauth",
+      "description": "Gmail MCP（GongRzhe autoauth 版）：读取与搜索邮件、撰写草稿、自动回复，Google OAuth 一次授权长期刷新——邮件客服与日常沟通的自动化通道。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@gongrzhe/server-gmail-autoauth-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "agent",
+      "requiresRootfs": true,
+      "vendor": "gongrzhe",
+      "tags": [
+        "communication",
+        "gmail",
+        "email"
+      ],
+      "category": "communication",
+      "homepage": "https://github.com/GongRzhe/Gmail-MCP-Server",
+      "envSchema": [
+        {
+          "key": "GMAIL_OAUTH_PATH",
+          "required": false,
+          "description": "可选：gcp-oauth.keys.json 路径（Google Cloud OAuth 客户端凭据）"
+        }
+      ],
+      "notes": "首次先运行 npx @gongrzhe/server-gmail-autoauth-mcp auth 完成浏览器授权。"
     },
     {
       "name": "server-slack",
@@ -1427,6 +2252,217 @@
         }
       ],
       "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 需先把 Google Cloud OAuth 凭据文件放进沙箱。"
+    },
+    {
+      "name": "apifox",
+      "description": "Apifox 官方 MCP：把 Apifox 项目里的接口文档喂给 AI——API 结构、字段说明与示例数据直接可查，接口变更实时同步——前后端联调与接口对接不再靠截图与文档传来传去。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "apifox-mcp-server",
+        "--project-id=YOUR_PROJECT_ID"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "apifox",
+      "tags": [
+        "devtools",
+        "api",
+        "docs"
+      ],
+      "category": "devtools",
+      "homepage": "https://apifox.com/help/applications-and-integrations/mcp-server",
+      "envSchema": [
+        {
+          "key": "APIFOX_ACCESS_TOKEN",
+          "required": true,
+          "description": "Apifox 个人 API 访问令牌（账户设置 → API 访问令牌）"
+        }
+      ],
+      "notes": "--project-id 换成你的项目 ID；私有化部署另加 --apifox-api-base-url。"
+    },
+    {
+      "name": "gradle",
+      "description": "Gradle 依赖解析 MCP：一次调用查明 Java/Kotlin 类来自哪个依赖——自动解析各 source set 类路径、定位 JAR、返回类结构（字段/方法/修饰符）——Android 与 JVM 项目排依赖神器。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "gradle-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "jukipuki",
+      "tags": [
+        "devtools",
+        "gradle",
+        "java"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/Jukipuki/gradle-mcp-server",
+      "envSchema": [],
+      "notes": "沙箱 rootfs 需有 JDK（javap 可用）且目标项目带 gradlew 包装器。"
+    },
+    {
+      "name": "jetbrains",
+      "description": "JetBrains 官方 MCP 代理：把 IntelliJ IDEA / Android Studio / PyCharm 等 IDE 的内置能力开放给 Agent——打开文件、定位符号、执行 IDE 操作——手机上远程驾驶桌面 IDE。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jetbrains/mcp-proxy"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "jetbrains",
+      "tags": [
+        "devtools",
+        "ide",
+        "proxy"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/JetBrains/mcp-jetbrains",
+      "envSchema": [
+        {
+          "key": "IDE_PORT",
+          "required": false,
+          "description": "可选：IDE 内置 Web 服务器端口（默认 63342）"
+        }
+      ],
+      "notes": "需在 IDE 内安装官方 MCP Server 插件后配合使用。"
+    },
+    {
+      "name": "mcp-remote",
+      "description": "远端 MCP OAuth 代理（punkpeye）：让只支持 STDIO 的客户端也能连远端 HTTP 服务器——自动处理 OAuth 授权与令牌缓存，支持自定义头与资源指示——远端生态的万能转接头。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.example.com/mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "all",
+      "requiresRootfs": true,
+      "vendor": "punkpeye",
+      "tags": [
+        "devtools",
+        "oauth",
+        "proxy"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/punkpeye/mcp-remote",
+      "envSchema": [],
+      "notes": "把 URL 参数换成目标远端服务器（可加 --header 注入令牌）。"
+    },
+    {
+      "name": "swagger",
+      "description": "Swagger / OpenAPI 调用 MCP：读取配置文件里的 API 定义，把每个端点变成 Agent 可直接调用的工具——对着存量 REST 服务做集成开发与联调测试。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "swagger-mcp-server",
+        "/workspace/swagger-config.json"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "marcin-sucharski",
+      "tags": [
+        "devtools",
+        "openapi",
+        "rest"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/marcin-sucharski/swagger-mcp-server",
+      "envSchema": [],
+      "notes": "先在 /workspace 写好 config.json（含 swaggerUrl 与鉴权头）再启动。"
+    },
+    {
+      "name": "semgrep",
+      "description": "Semgrep 静态安全扫描 MCP（VetCoders）：按语言与规则集扫描整个项目，输出漏洞、代码质量问题与修复建议，可同步 Semgrep App 平台规则——上线前的自动化代码安检员。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-semgrep"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "vetcoders",
+      "tags": [
+        "security",
+        "sast",
+        "code-review"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/VetCoders/mcp-server-semgrep",
+      "envSchema": [
+        {
+          "key": "SEMGREP_APP_TOKEN",
+          "required": false,
+          "description": "可选：Semgrep App 平台令牌（规则同步与结果回传）"
+        }
+      ],
+      "notes": "需 rootfs 内预装 semgrep CLI（pip install semgrep 或 npm i -g semgrep）。"
+    },
+    {
+      "name": "aws-bedrock-kb",
+      "description": "AWS 官方 Bedrock 知识库 MCP（awslabs）：发现并检索 Amazon Bedrock Knowledge Bases——对话式问答、段落级引用与数据源清单——把企业 RAG 知识库接入 Agent 工具链。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "awslabs.bedrock-kb-retrieval-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "awslabs",
+      "tags": [
+        "ai-ml",
+        "rag",
+        "bedrock"
+      ],
+      "category": "ai-ml",
+      "homepage": "https://github.com/awslabs/mcp/tree/main/src/bedrock-kb-retrieval-mcp-server",
+      "envSchema": [
+        {
+          "key": "AWS_REGION",
+          "required": true,
+          "description": "知识库所在区域（如 us-east-1）"
+        },
+        {
+          "key": "AWS_ACCESS_KEY_ID",
+          "required": false,
+          "description": "可选：AWS 访问密钥（或走标准凭据链/profile）"
+        },
+        {
+          "key": "AWS_SECRET_ACCESS_KEY",
+          "required": false,
+          "description": "可选：AWS 私有访问密钥"
+        }
+      ],
+      "notes": "需有 Bedrock 知识库访问权限的 AWS 凭据。"
     }
   ]
 }

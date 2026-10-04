@@ -1,397 +1,201 @@
 #!/usr/bin/env python3
-"""apex-mcp-hub v2 重建器：App mcp_catalog 32 条 + 现有 8 条（修复 fetch/time）
-+ 10 台新验证服务器 → 50 台分类目录。
+"""apex-mcp-hub 注册表重算与完整性工具（v2.1 起自包含，不再依赖 ../Android-Guru-Agent 的 mcp_catalog——该目录已随 APK 资产归零而退役）。
 
-运行前提：Android-Guru-Agent 克隆在 ../Android-Guru-Agent。
-输出：index.json（apex-mcp-hub-v1 schema，新增 category/homepage/envSchema 前向兼容字段）。
+用法：
+  python3 scripts/build_index.py           # 重算 categories 统计与顶层 count、按（类目,name）排序后原地重写 index.json
+  python3 scripts/build_index.py --check   # 只校验不写盘（出错退出码 1，适合本地预检）
+
+与 scripts/validate.py 的分工：validate.py 是 CI 红线校验器（只报错不修）；本工具可
+「自愈」统计数字与排序，并额外校验富化字段（description/tags/homepage）的收录质量。
+
+校验规则（--check 下前 7 条任何一条失败即退出码 1；第 8 条为收录质量预警，只提示不拦截——
+ v2.1 前的存量条目描述较短属正常，新条目按 80-160 字 / tags 3-6 收录）：
+ 1. index.json 可解析、schema 为 apex-mcp-hub-v1；
+ 2. categories 词表 = 18 类（15 既有 + devtools/security/ai-ml），每类 label 非空，
+    统计 count 与 servers[] 实际分布一致，顶层 count = len(servers)；
+ 3. name 全局唯一、格式 ^[a-z0-9][a-z0-9-]{1,48}$；
+ 4. transport ∈ {STDIO, HTTP, SSE}；STDIO 必有 command/args 且无 url；HTTP 必有 https url 且无 command；
+ 5. enabled 恒 false（安装 ≠ 启动）；runInSandbox / requiresRootfs 与形态一致（STDIO true / HTTP false）；
+    scope ∈ {agent, coding, all}；envSchema 每项含 key / required / description；
+ 6. 收录质量：description 非空且 ≤ 220、vendor 非空、tags ≥ 1、homepage 为 https；
+ 7. 索引 ≤ 2MB（App 拉取上限）；
+ 8. （预警）description < 60 字或 tags < 3 个 → 建议新条目按 v2.1 质量标准补齐。
 """
 import json
 import os
+import re
+import sys
 
-CATALOG_DIR = "../Android-Guru-Agent/app/src/main/assets/mcp_catalog"
-OUT = "index.json"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+INDEX = os.path.join(ROOT, "index.json")
 
-# ── 分类体系（15 类，标签中文）──
-CATEGORY_LABELS = {
-    "official": "官方参考实现",
-    "docs": "文档与知识",
-    "web-search": "网络搜索",
-    "browser": "浏览器自动化",
-    "database": "数据库",
-    "git": "Git 与代码托管",
-    "cloud": "云平台",
-    "observability": "可观测性",
-    "productivity": "效率工具",
-    "desktop": "桌面控制",
-    "finance": "金融支付",
-    "design": "设计",
-    "communication": "通信协作",
-    "location": "地图位置",
-    "data": "数据源",
-}
+# 18 类词表：15 既有 + v2.1 新增三类（顺序即目录呈现顺序）
+CATEGORY_ORDER = [
+    "official", "docs", "web-search", "browser", "database", "git", "cloud",
+    "observability", "productivity", "desktop", "finance", "design",
+    "communication", "location", "data", "devtools", "security", "ai-ml",
+]
+LEGAL_CATEGORIES = set(CATEGORY_ORDER)
+LEGAL_SCOPES = {"agent", "coding", "all"}
+LEGAL_TRANSPORTS = {"STDIO", "HTTP", "SSE"}
+NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,48}$")
 
-# ── 从 App 目录迁入的 32 台：catalog-id → (category, scope, vendor, [name override]) ──
-CATALOG_MAP = {
-    # official.json 独有（uvx 官方 Python 形态）
-    "fetch-python": ("official", "all", "modelcontextprotocol", None),
-    "git": ("git", "coding", "modelcontextprotocol", None),
-    # web-search
-    "brave-search": ("web-search", "agent", "modelcontextprotocol", None),
-    "tavily": ("web-search", "agent", "tavily", None),
-    "exa": ("web-search", "agent", "exa-labs", None),
-    "kagi": ("web-search", "agent", "kagi", None),
-    "duckduckgo": ("web-search", "all", "duckduckgo", None),
-    # browser
-    "playwright": ("browser", "coding", "microsoft", None),
-    "puppeteer": ("browser", "coding", "modelcontextprotocol", None),
-    "chrome-devtools": ("browser", "coding", "google", None),
-    "browserbase": ("browser", "coding", "browserbase", None),
-    # database
-    "sqlite": ("database", "coding", "modelcontextprotocol", None),
-    "postgres": ("database", "coding", "modelcontextprotocol", None),
-    "motherduck": ("database", "coding", "motherduck", None),
-    "dbhub": ("database", "coding", "bytebase", None),
-    # git / cloud / observability
-    "server-github": ("git", "coding", "modelcontextprotocol", None),
-    "gitlab": ("git", "coding", "modelcontextprotocol", None),
-    "cloudflare": ("cloud", "coding", "cloudflare", None),
-    "kubernetes": ("cloud", "coding", "flux159", None),
-    "sentry": ("observability", "coding", "sentry", None),
-    "grafana": ("observability", "coding", "grafana", None),
-    # productivity / desktop / finance / design
-    "notion": ("productivity", "agent", "notion", None),
-    "obsidian": ("productivity", "agent", "obsidian", None),
-    "linear": ("productivity", "coding", "linear", None),
-    "desktop-commander": ("desktop", "all", "wonderwhy-er", None),
-    "commands": ("desktop", "all", "g0t4", None),
-    "stripe": ("finance", "all", "stripe", None),
-    "figma-context": ("design", "coding", "glideapps", None),
-    # communication / location / data
-    "server-slack": ("communication", "agent", "modelcontextprotocol", None),
-    "slack-remote": ("communication", "agent", "slack", None),
-    "google-maps": ("location", "agent", "modelcontextprotocol", None),
-    "gdrive": ("data", "agent", "modelcontextprotocol", None),
-}
+errors = []
+warnings = []
 
 
-def from_catalog(entry, category, scope, vendor, name_override):
-    """App mcp_catalog 条目 → hub 条目。"""
-    http = entry.get("transport") in ("HTTP", "SSE")
-    return {
-        "name": name_override or entry["id"],
-        "description": entry.get("descriptionZh") or entry.get("description", ""),
-        "transport": entry.get("transport", "STDIO"),
-        **({"url": entry["url"]} if http else {}),
-        **({} if http else {
-            "command": entry.get("command", "npx"),
-            "args": entry.get("args", []),
-        }),
-        "env": {},
-        "runInSandbox": bool(entry.get("sandboxOnly", not http)),
-        "enabled": False,
-        "scope": scope,
-        "requiresRootfs": not http,
-        "vendor": vendor,
-        "tags": sorted({category, *(entry.get("tags", []) if entry.get("tags") else [])}),
-        "category": category,
-        "homepage": entry.get("homepage", ""),
-        "envSchema": entry.get("envSchema", []),
-        "notes": entry.get("notes", ""),
-    }
+def err(msg: str) -> None:
+    errors.append(msg)
 
 
-def main():
-    # 1) 读 App 目录
-    catalog = {}
-    for fname in sorted(os.listdir(CATALOG_DIR)):
-        if not fname.endswith(".json"):
-            continue
-        with open(os.path.join(CATALOG_DIR, fname), encoding="utf-8") as fp:
-            d = json.load(fp)
-        for e in d.get("entries", []):
-            catalog[e["id"]] = e
+def warn(msg: str) -> None:
+    warnings.append(msg)
 
-    servers = []
 
-    # 2) 现有 8 台（修复 fetch/time 两个不存在的 npm 包）
-    servers += [
-        {
-            "name": "fs-sandbox",
-            "description": "官方文件系统 MCP（沙箱形态）：在 /workspace 作用域内读写文件、建目录、移动与搜索——内置 fs 的 npx 双胞胎。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "modelcontextprotocol",
-            "tags": ["files", "official", "workspace"], "category": "official",
-            "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
-            "envSchema": [{"key": "WORKSPACE", "required": False,
-                           "description": "可选：覆盖默认工作区路径（默认 /workspace）"}],
-            "notes": "路径参数即允许访问的目录；沙箱形态以 /workspace 为作用域。",
-        },
-        {
-            "name": "memory-sandbox",
-            "description": "官方知识图谱记忆 MCP（沙箱形态）：实体/关系/观察的持久化记忆——内置 memory 的 npx 双胞胎。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-memory"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "agent",
-            "requiresRootfs": True, "vendor": "modelcontextprotocol",
-            "tags": ["memory", "official", "knowledge-graph"], "category": "official",
-            "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
-            "envSchema": [],
-            "notes": "跨会话记忆外脑；与内置 memory MCP 同源同构。",
-        },
-        {
-            "name": "everything-sandbox",
-            "description": "官方测试参考服务器：覆盖 MCP 全能力面（工具/资源/提示词/采样）——验证沙箱 MCP 管线的首选。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-everything"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "modelcontextprotocol",
-            "tags": ["testing", "official", "reference"], "category": "official",
-            "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/everything",
-            "envSchema": [],
-            "notes": "全能力面冒烟测试用。",
-        },
-        {
-            "name": "context7",
-            "description": "任何库/框架的最新文档实时检索（Upstash Context7）——对抗训练数据过时，直查现行版本文档。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@upstash/context7-mcp"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "upstash",
-            "tags": ["docs", "coding", "libraries"], "category": "docs",
-            "homepage": "https://github.com/upstash/context7",
-            "envSchema": [{"key": "CONTEXT7_API_KEY", "required": False,
-                           "description": "可选：更高配额（匿名亦可用）"}],
-            "notes": "免沙箱远端形态见 context7-remote。",
-        },
-        {
-            "name": "sequential-thinking",
-            "description": "官方顺序思考链服务器：动态分步推理、思路修正与分支——把长链推理从一次性输出变成可回溯的过程。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "all",
-            "requiresRootfs": True, "vendor": "modelcontextprotocol",
-            "tags": ["reasoning", "official", "thinking"], "category": "official",
-            "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
-            "envSchema": [],
-            "notes": "与内置 thinking MCP 互补的官方参考实现。",
-        },
-        {
-            "name": "fetch",
-            "description": "网页抓取服务器（node 纯 JS 形态）：URL → 干净 Markdown，内置分页与机器人规避。v2 修复：原 @modelcontextprotocol/server-fetch npm 包不存在，已切换为 @kazuph/mcp-fetch。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@kazuph/mcp-fetch"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "agent",
-            "requiresRootfs": True, "vendor": "kazuph",
-            "tags": ["web", "fetch", "markdown"], "category": "official",
-            "homepage": "https://github.com/kazuph/mcp-fetch",
-            "envSchema": [],
-            "notes": "官方 Python 形态见 fetch-python（uvx）。",
-        },
-        {
-            "name": "time",
-            "description": "官方时间服务器（Python uvx 形态）：当前时间/时区换算与任意格式时间解析。v2 修复：原 @modelcontextprotocol/server-time npm 包不存在，已切换为 uvx mcp-server-time。",
-            "transport": "STDIO", "command": "uvx",
-            "args": ["mcp-server-time"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "all",
-            "requiresRootfs": True, "vendor": "modelcontextprotocol",
-            "tags": ["time", "official", "timezone"], "category": "official",
-            "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
-            "envSchema": [],
-            "notes": "沙箱需 python + uv（rootfs 内预装）。",
-        },
-        {
-            "name": "deepwiki",
-            "description": "DeepWiki 远端 MCP：就任意公开 GitHub 仓库直接提问（架构/实现/用法），免密钥即连的代码理解外脑。",
-            "transport": "HTTP",
-            "url": "https://mcp.deepwiki.com/mcp",
-            "env": {}, "runInSandbox": False, "enabled": False, "scope": "all",
-            "requiresRootfs": False, "vendor": "asyncfuncai",
-            "tags": ["docs", "github", "remote"], "category": "docs",
-            "homepage": "https://github.com/AsyncFuncAI/deepwiki-mcp",
-            "envSchema": [],
-            "notes": "免沙箱远端形态，零配置。",
-        },
-    ]
+def validate_and_recompute(idx: dict) -> dict:
+    """校验 + 重算统计。返回处理后的 idx（stat 字段已重算、servers 已排序）。"""
+    if idx.get("schema") != "apex-mcp-hub-v1":
+        err(f"schema 应为 apex-mcp-hub-v1，实际 {idx.get('schema')!r}")
 
-    # 3) App 目录迁入 32 台
-    for cid, (cat, scope, vendor, name_ov) in CATALOG_MAP.items():
-        if cid not in catalog:
-            raise SystemExit(f"catalog entry missing: {cid}")
-        servers.append(from_catalog(catalog[cid], cat, scope, vendor, name_ov))
+    servers = idx.get("servers")
+    if not isinstance(servers, list) or not servers:
+        err("servers[] 缺失或为空")
+        return idx
 
-    # 4) 新增 10 台（多源新验证）
-    servers += [
-        {
-            "name": "microsoft-learn",
-            "description": "微软官方远端 MCP：检索 Microsoft/Azure 官方文档与代码示例（docs_search / code_sample_search / docs_fetch 三工具流），免密钥直连。",
-            "transport": "HTTP",
-            "url": "https://learn.microsoft.com/api/mcp",
-            "env": {}, "runInSandbox": False, "enabled": False, "scope": "coding",
-            "requiresRootfs": False, "vendor": "microsoft",
-            "tags": ["docs", "azure", "remote"], "category": "docs",
-            "homepage": "https://learn.microsoft.com/azure/developer/azure-mcp/",
-            "envSchema": [],
-            "notes": "官方托管端点，流式 HTTP，零配置。",
-        },
-        {
-            "name": "context7-remote",
-            "description": "Context7 免沙箱远端形态：库文档实时检索的 HTTP 端点，无需 rootfs / npx，装好即连。",
-            "transport": "HTTP",
-            "url": "https://mcp.context7.com/mcp",
-            "env": {}, "runInSandbox": False, "enabled": False, "scope": "all",
-            "requiresRootfs": False, "vendor": "upstash",
-            "tags": ["docs", "remote", "libraries"], "category": "docs",
-            "homepage": "https://github.com/upstash/context7",
-            "envSchema": [],
-            "notes": "沙箱 npx 形态见 context7。",
-        },
-        {
-            "name": "amap",
-            "description": "高德地图官方 MCP：地理编码/逆地理/POI 搜索/路线规划（驾车/步行/公交）/天气查询——中文地点与国内出行场景首选。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@amap/amap-maps-mcp-server"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "agent",
-            "requiresRootfs": True, "vendor": "amap",
-            "tags": ["maps", "china", "routing"], "category": "location",
-            "homepage": "https://lbs.amap.com/api/mcp-server/gettingstarted",
-            "envSchema": [{"key": "AMAP_MAPS_API_KEY", "required": True,
-                           "description": "高德开放平台 Web 服务 Key（lbs.amap.com 免费申请）"}],
-            "notes": "国内地图场景对 google-maps 的互补。",
-        },
-        {
-            "name": "firecrawl",
-            "description": "Firecrawl 网页转 Markdown 服务：单页/整站爬取、JS 渲染、结构化抽取——把任意网页变成 LLM 可用的干净数据。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "firecrawl-mcp"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "all",
-            "requiresRootfs": True, "vendor": "firecrawl",
-            "tags": ["web", "scraping", "crawl"], "category": "web-search",
-            "homepage": "https://github.com/firecrawl/firecrawl-mcp-server",
-            "envSchema": [{"key": "FIRECRAWL_API_KEY", "required": True,
-                           "description": "firecrawl.dev API Key（有免费额度）"}],
-            "notes": "与 fetch 的区别：整站爬取 + JS 渲染 + 结构化抽取。",
-        },
-        {
-            "name": "paper-search",
-            "description": "学术论文检索服务器（node 形态）：arXiv / PubMed / bioRxiv 多源论文搜索与全文下载链接，写综述查文献的利器。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "paper-search-mcp-nodejs"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "all",
-            "requiresRootfs": True, "vendor": "open-science",
-            "tags": ["research", "arxiv", "papers"], "category": "docs",
-            "homepage": "https://github.com/OpenSciHackathon/paper-search-mcp-nodejs",
-            "envSchema": [],
-            "notes": "无需 API Key，即装即用。",
-        },
-        {
-            "name": "mongodb",
-            "description": "MongoDB 官方 MCP：连接实例/Atlas，查集合、跑聚合管道、分析 schema 与索引。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "mongodb-mcp-server"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "mongodb",
-            "tags": ["database", "nosql", "atlas"], "category": "database",
-            "homepage": "https://github.com/mongodb-js/mongodb-mcp-server",
-            "envSchema": [{"key": "MDB_MCP_CONNECTION_STRING", "required": True,
-                           "description": "mongodb:// 或 mongodb+srv:// 连接串"}],
-            "notes": "官方 npm 分发。",
-        },
-        {
-            "name": "supabase",
-            "description": "Supabase 官方 MCP：项目管理、表结构/迁移、RLS 策略与 SQL 查询——serverless Postgres 全栈工作台。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@supabase/mcp-server-supabase"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "supabase",
-            "tags": ["database", "postgres", "backend"], "category": "database",
-            "homepage": "https://github.com/supabase-community/supabase-mcp",
-            "envSchema": [{"key": "SUPABASE_ACCESS_TOKEN", "required": True,
-                           "description": "supabase.com 控制台生成的 Access Token"},
-                          {"key": "SUPABASE_PROJECT_ID", "required": False,
-                           "description": "可选：直连某个项目，避免每次列出"}],
-            "notes": "官方 npm 分发，token 走环境变量。",
-        },
-        {
-            "name": "duckdb",
-            "description": "DuckDB MCP（MotherDuck 维护）：对本地/内存 DuckDB 跑分析 SQL——单文件 OLAP，CSV/Parquet 直接查询。",
-            "transport": "STDIO", "command": "uvx",
-            "args": ["mcp-server-duckdb", "--db-path", ":memory:"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "motherduck",
-            "tags": ["database", "olap", "analytics"], "category": "database",
-            "homepage": "https://github.com/motherduckdb/mcp-server-duckdb",
-            "envSchema": [{"key": "motherduck_token", "required": False,
-                           "description": "可选：连接 MotherDuck 云端（md: 数据库）"}],
-            "notes": "默认内存库；--db-path 可指到 /workspace 持久化文件。",
-        },
-        {
-            "name": "neon",
-            "description": "Neon 官方 MCP：serverless Postgres 平台的项目/分支/表管理与时点恢复——分支即数据库的云原生玩法。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@neondatabase/mcp-server-neon"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "neondatabase",
-            "tags": ["database", "postgres", "serverless"], "category": "database",
-            "homepage": "https://github.com/neondatabase/mcp-server-neon",
-            "envSchema": [{"key": "NEON_API_KEY", "required": True,
-                           "description": "console.neon.tech 生成的 API Key"}],
-            "notes": "官方 npm 分发。",
-        },
-        {
-            "name": "elasticsearch",
-            "description": "Elastic 官方 MCP：对 Elasticsearch 集群跑查询/聚合、管理索引与映射——日志与检索场景的直连通道。",
-            "transport": "STDIO", "command": "npx",
-            "args": ["-y", "@elastic/mcp-server-elasticsearch"],
-            "env": {}, "runInSandbox": True, "enabled": False, "scope": "coding",
-            "requiresRootfs": True, "vendor": "elastic",
-            "tags": ["database", "search", "observability"], "category": "database",
-            "homepage": "https://github.com/elastic/mcp-server-elasticsearch",
-            "envSchema": [{"key": "ES_URL", "required": False,
-                           "description": "集群地址（默认 http://localhost:9200）"},
-                          {"key": "ES_API_KEY", "required": False,
-                           "description": "可选：Encoded API Key（无则匿名/基础认证）"}],
-            "notes": "官方 npm 分发。",
-        },
-    ]
-
-    # 5) 组装 index
-    order = list(CATEGORY_LABELS)
-    servers.sort(key=lambda s: (order.index(s["category"]), s["name"]))
-    names = [s["name"] for s in servers]
-    assert len(names) == len(set(names)) == 50, f"expect 50 unique, got {len(names)}"
-    assert all(s.get("transport") in ("STDIO", "HTTP") for s in servers)
-
-    idx = {
-        "schema": "apex-mcp-hub-v1",
-        "name": "Apex MCP Hub",
-        "description": "Apex Agent official MCP server repository — 50 verified servers across 15 categories (sandbox npx/uvx + hosted remote HTTP), installable on demand from the in-app Market.",
-        "count": len(servers),
-        "categories": {k: {"label": v, "count": 0} for k, v in CATEGORY_LABELS.items()},
-        "changelog": [
-            {
-                "version": "2.0.0",
-                "date": "2026-10-03",
-                "notes": "v2 重组：并入 Android-Guru-Agent 内置 mcp_catalog 32 台（APK 不再随包分发）；修复 fetch/time 指向不存在 npm 包的问题；新增 microsoft-learn/context7-remote/amap/firecrawl/paper-search/mongodb/supabase/duckdb/neon/elasticsearch 十台（端点与包名逐一经 npm/PyPI/HTTP 握手验证）；全目录按 15 类分类（category 字段，前向兼容）。"
-            }
-        ],
-        "servers": servers,
-    }
+    seen = set()
+    cat_count: dict = {}
     for s in servers:
-        idx["categories"][s["category"]]["count"] += 1
+        name = s.get("name", "<missing>")
+        if not NAME_RE.match(str(name)):
+            err(f"[{name}] name 格式非法")
+        if name in seen:
+            err(f"[{name}] name 重复")
+        seen.add(name)
 
-    with open(OUT, "w", encoding="utf-8") as fp:
+        transport = s.get("transport")
+        if transport not in LEGAL_TRANSPORTS:
+            err(f"[{name}] transport 非法: {transport!r}")
+        if transport == "STDIO":
+            if not s.get("command"):
+                err(f"[{name}] STDIO 缺 command")
+            if "args" not in s:
+                err(f"[{name}] STDIO 缺 args")
+            if s.get("url"):
+                err(f"[{name}] STDIO 不应有 url")
+        elif transport:
+            if not str(s.get("url", "")).startswith("https://"):
+                err(f"[{name}] HTTP 缺 https url")
+            if s.get("command"):
+                err(f"[{name}] HTTP 不应有 command")
+
+        if s.get("scope") not in LEGAL_SCOPES:
+            err(f"[{name}] scope 非法: {s.get('scope')!r}")
+        if s.get("enabled") is not False:
+            err(f"[{name}] enabled 必须恒 false（安装 ≠ 启动）")
+
+        expect_rootfs = transport == "STDIO"
+        if s.get("requiresRootfs") != expect_rootfs:
+            err(f"[{name}] requiresRootfs={s.get('requiresRootfs')} 与形态不符（应为 {expect_rootfs}）")
+        if s.get("runInSandbox") != expect_rootfs:
+            err(f"[{name}] runInSandbox={s.get('runInSandbox')} 与形态不符（应为 {expect_rootfs}）")
+
+        cat = s.get("category")
+        if cat not in LEGAL_CATEGORIES:
+            err(f"[{name}] category 非法: {cat!r}")
+        else:
+            cat_count[cat] = cat_count.get(cat, 0) + 1
+
+        # 收录质量（v2.1 起）：硬性=字段存在且非空；软性=长度/标签数为预警
+        desc = s.get("description") or ""
+        if not (1 <= len(desc) <= 220):
+            err(f"[{name}] description 缺失或超过 220 字符")
+        elif len(desc) < 60:
+            warn(f"[{name}] description 仅 {len(desc)} 字（v2.1 新条目标准为 80-160 字）")
+        if not s.get("vendor"):
+            err(f"[{name}] vendor 为空")
+        tags = s.get("tags") or []
+        if len(tags) < 1:
+            err(f"[{name}] tags 缺失")
+        elif len(tags) < 3:
+            warn(f"[{name}] tags 仅 {len(tags)} 个（v2.1 新条目标准为 3-6 个）")
+        home = s.get("homepage") or ""
+        if not home.startswith("https://"):
+            err(f"[{name}] homepage 缺失或非 https: {home!r}")
+
+        for ev in s.get("envSchema", []):
+            if not ev.get("key"):
+                err(f"[{name}] envSchema 项缺 key")
+            if "required" not in ev or not ev.get("description"):
+                err(f"[{name}] envSchema[{ev.get('key')}] 缺 required/description")
+
+    # categories 词表与统计勾稽
+    legend = idx.get("categories", {})
+    for c in CATEGORY_ORDER:
+        if c not in legend:
+            err(f"categories 统计缺类目 {c!r}")
+        elif not legend[c].get("label"):
+            err(f"categories[{c}] 缺中文 label")
+    for c in legend:
+        if c not in LEGAL_CATEGORIES:
+            err(f"categories 统计含非法类目 {c!r}")
+    # 重算（自愈）
+    labels = {c: legend.get(c, {}).get("label", "") for c in CATEGORY_ORDER}
+    idx["categories"] = {c: {"label": labels[c], "count": cat_count.get(c, 0)} for c in CATEGORY_ORDER}
+    idx["count"] = len(servers)
+
+    # 稳定排序：（类目顺序, name）
+    servers.sort(key=lambda s: (CATEGORY_ORDER.index(s.get("category", "zzz")), s.get("name", "")))
+    idx["servers"] = servers
+    return idx
+
+
+def main() -> int:
+    check_only = "--check" in sys.argv
+    if not os.path.exists(INDEX):
+        print(f"FATAL: {INDEX} 不存在")
+        return 1
+    try:
+        with open(INDEX, encoding="utf-8") as fp:
+            idx = json.load(fp)
+    except Exception as e:  # noqa: BLE001
+        print(f"FATAL: index.json 不可解析: {e}")
+        return 1
+
+    idx = validate_and_recompute(idx)
+
+    size = os.path.getsize(INDEX)
+    if size > 2 * 1024 * 1024:
+        err(f"index.json {size}B 超过 App 2MB 拉取上限")
+
+    if errors:
+        print(f"校验失败，共 {len(errors)} 处：")
+        for e in errors:
+            print(f"  ERROR: {e}")
+        return 1
+
+    if warnings:
+        print(f"质量预警 {len(warnings)} 处（存量条目描述较短属正常，不拦截）：")
+        for w in warnings[:10]:
+            print(f"  WARN: {w}")
+        if len(warnings) > 10:
+            print(f"  …另有 {len(warnings) - 10} 处")
+
+    if check_only:
+        print(f"OK (check-only): {idx['count']} 台服务器，{len(idx['categories'])} 类，索引 {size}B，无需修复")
+        return 0
+
+    with open(INDEX, "w", encoding="utf-8") as fp:
         json.dump(idx, fp, ensure_ascii=False, indent=2)
         fp.write("\n")
-
-    print(f"OK: {len(servers)} servers, {len(CATEGORY_LABELS)} categories, "
-          f"{os.path.getsize(OUT)} bytes")
-    for c in order:
+    new_size = os.path.getsize(INDEX)
+    print(f"OK: 重算完成并重写 index.json —— {idx['count']} 台服务器，{len(idx['categories'])} 类，"
+          f"{size}B → {new_size}B")
+    for c in CATEGORY_ORDER:
         n = idx["categories"][c]["count"]
         if n:
-            print(f"  {c} ({CATEGORY_LABELS[c]}): {n}")
+            print(f"  {c} ({idx['categories'][c]['label']}): {n}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

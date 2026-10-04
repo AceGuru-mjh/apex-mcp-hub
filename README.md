@@ -1,6 +1,6 @@
 # Apex MCP Hub
 
-**Apex Agent 官方 MCP 服务器仓库** —— 50 台经真实验证的服务器、15 个分类，沙箱（PRoot Ubuntu 内 npx/uvx）与远端（HTTP）双形态，从应用内「市场 → MCP → 官方 MCP 仓库」安装、配置、启动。
+**Apex Agent 官方 MCP 服务器仓库** —— 80 台经真实验证的服务器、18 个分类，沙箱（PRoot Ubuntu 内 npx/uvx）与远端（HTTP）双形态，从应用内「市场 → MCP → 官方 MCP 仓库」安装、配置、启动。
 
 [English](#english) below.
 
@@ -12,38 +12,49 @@
 4. **全目录分类**：新增 `category` 字段（15 类，前向兼容——App 忽略未知字段），`categories` 顶层统计表随索引分发；
 5. 丢弃 2 台在 Android 上不可用的形态（docker run 的 github 与 docker-gateway），GitHub 改用 npx 官方 `server-github`。
 
-## 目录矩阵（50 台 · 15 类）
+## v2.1 扩容说明（2026-10）
+
+1. **主题「编码与完成复杂任务」**：+30 台 → 80 台（15 → 18 类），编码/开发相关 18 台——数据库 6（redis、neo4j、qdrant、chroma、influxdb、astra-db）、云 2（aws-iac、aws-billing）、可观测性 2（prometheus、datadog）、文档 3（arxiv、aws-docs、wikipedia）、开发效率 5（apifox、gradle、jetbrains、mcp-remote、swagger）；
+2. **新增三类**：`devtools 开发效率`、`security 安全`、`ai-ml 人工智能`（`categories` 顶层表已带中文 label 与统计；App 端前向兼容）；
+3. **验证铁律**：30 台全部实测可安装——npm 包经 registry.npmjs.org、PyPI 模块经 pypi.org 逐一确认 HTTP 200；候选池 9 个名称未过验证或已弃用（@redis/mcp-redis、@clickhouse/mcp-server、@neo4j/neo4j-mcp-server、@snyk/mcp-server、ansible-doc-mcp-server、memgraph-mcp-server、arangodb-mcp-server、mcp.quickchart.io 端点、hf-mcp 非 HuggingFace 官方）——分别换用官方等价包（PyPI redis-mcp-server / mcp-neo4j-cypher / npm @gongrzhe/quickchart-mcp-server 等）或淘汰；awslabs 已弃用的 cdk/terraform/cost-explorer 换用活跃后继 aws-iac / aws-billing；
+4. 其余 12 台：效率 6（atlassian、excel、office-word、pandoc、shrimp-task-manager、todoist）、设计 2（blender、quickchart）、通信 1（gmail-autoauth）、搜索 1（omnisearch）、安全 1（semgrep）、AI 1（aws-bedrock-kb）；mcp-pandoc 需 rootfs 预装 pandoc CLI、semgrep 需预装 semgrep CLI、blender 需桌面端 Blender 实例 + 插件（notes 已标注）；
+5. `scripts/build_index.py` 重写为自包含「重算与校验工具」：读 index.json 本体重算 categories 统计与 count、按（类目, name）稳定排序，`--check` 只校验不写盘（不再依赖已退役的 ../Android-Guru-Agent mcp_catalog）。
+
+## 目录矩阵（80 台 · 18 类）
 
 | 类 | 数 | 服务器 |
 |---|---|---|
 | official 官方参考实现 | 7 | fs-sandbox、memory-sandbox、everything-sandbox、sequential-thinking、fetch、fetch-python、time |
-| docs 文档与知识 | 5 | context7、context7-remote、microsoft-learn、deepwiki、paper-search |
-| web-search 网络搜索 | 6 | brave-search、tavily、exa、kagi、duckduckgo、firecrawl |
+| docs 文档与知识 | 8 | arxiv、aws-docs、context7、context7-remote、deepwiki、microsoft-learn、paper-search、wikipedia |
+| web-search 网络搜索 | 7 | brave-search、tavily、exa、kagi、duckduckgo、firecrawl、omnisearch |
 | browser 浏览器自动化 | 4 | playwright、puppeteer、chrome-devtools、browserbase |
-| database 数据库 | 9 | sqlite、postgres、mongodb、supabase、duckdb、neon、elasticsearch、motherduck、dbhub |
+| database 数据库 | 15 | sqlite、postgres、mongodb、supabase、duckdb、neon、elasticsearch、motherduck、dbhub、redis、neo4j、qdrant、chroma、influxdb、astra-db |
 | git Git 与代码托管 | 3 | git、server-github、gitlab |
-| cloud 云平台 | 2 | cloudflare、kubernetes |
-| observability 可观测性 | 2 | sentry、grafana |
-| productivity 效率工具 | 3 | notion、obsidian、linear |
+| cloud 云平台 | 4 | cloudflare、kubernetes、aws-iac、aws-billing |
+| observability 可观测性 | 4 | sentry、grafana、prometheus、datadog |
+| productivity 效率工具 | 9 | notion、obsidian、linear、atlassian、excel、office-word、pandoc、shrimp-task-manager、todoist |
 | desktop 桌面控制 | 2 | desktop-commander、commands |
-| communication 通信协作 | 2 | server-slack、slack-remote |
+| communication 通信协作 | 3 | server-slack、slack-remote、gmail-autoauth |
 | location 地图位置 | 2 | google-maps、amap |
 | finance 金融支付 | 1 | stripe |
-| design 设计 | 1 | figma-context |
+| design 设计 | 3 | figma-context、blender、quickchart |
 | data 数据源 | 1 | gdrive |
+| devtools 开发效率 | 5 | apifox、gradle、jetbrains、mcp-remote、swagger |
+| security 安全 | 1 | semgrep |
+| ai-ml 人工智能 | 1 | aws-bedrock-kb |
 
-`scope` 分布：`coding` 26 / `agent` 13 / `all` 11 —— 市场按工位分级过滤。
+`scope` 分布：`coding` 44 / `agent` 17 / `all` 19 —— 市场按工位分级过滤。
 
 ## 仓库结构
 
 ```
-index.json              # 注册表（apex-mcp-hub-v1）：50 台服务器完整配置内联 + categories 统计 + changelog
-scripts/build_index.py  # 重建器（从宿主 mcp_catalog + 新增清单生成 index.json）
+index.json              # 注册表（apex-mcp-hub-v1）：80 台服务器完整配置内联 + categories 统计 + changelog
+scripts/build_index.py  # 重算与校验工具（自包含：重算 categories 统计与 count 并稳定排序；--check 只校验）
 scripts/validate.py     # 校验器（CI 用；--online 开启包存在性 + HTTP 握手冒烟）
 .github/workflows/validate.yml
 ```
 
-单文件设计：MCP 配置极小（约 800B/条），完整内联在 `index.json` 的 `servers[]` 里，App 一次拉取即可渲染完整目录。
+单文件设计：MCP 配置极小（约 1KB/条），完整内联在 `index.json` 的 `servers[]` 里，App 一次拉取即可渲染完整目录。
 
 ## 条目格式
 
@@ -75,7 +86,7 @@ scripts/validate.py     # 校验器（CI 用；--online 开启包存在性 + HTT
 | `runInSandbox` / `requiresRootfs` | `true` = PRoot Ubuntu 沙箱内启动（Android 无宿主 node/python），需先装 rootfs |
 | `enabled` | 安装初始态恒 `false` —— **安装 ≠ 启动**（学习 opencode 的配置门控） |
 | `scope` | `agent` / `coding` / `all`（工位分级过滤） |
-| `category` | 15 类词表之一（v2 新增，前向兼容） |
+| `category` | 18 类词表之一（v2 新增、v2.1 扩至 18 类，前向兼容） |
 | `envSchema` | 需要的环境变量声明（key/required/description）——供安装表单/配置引导渲染（前向兼容字段） |
 
 ## CI 校验（GitHub Actions）
@@ -103,9 +114,11 @@ scripts/validate.py     # 校验器（CI 用；--online 开启包存在性 + HTT
 
 # English
 
-**Official MCP server repository for Apex Agent** — 50 verified servers across 15 categories, sandbox (npx/uvx inside PRoot Ubuntu) and remote (streamable HTTP) forms, installable / configurable / startable from the in-app Market.
+**Official MCP server repository for Apex Agent** — 80 verified servers across 18 categories, sandbox (npx/uvx inside PRoot Ubuntu) and remote (streamable HTTP) forms, installable / configurable / startable from the in-app Market.
 
 **v2 reorg (Oct 2026)**: absorbed 32 servers from the Android-Guru-Agent bundled catalog (the APK no longer ships them — market installs now truly download from this repo); fixed `fetch`/`time` entries that pointed to **non-existent npm packages**; added 10 new servers, each verified via npm/PyPI registry lookups and live HTTP `initialize` handshakes (microsoft-learn, context7-remote, amap, firecrawl, paper-search, mongodb, supabase, duckdb, neon, elasticsearch); categorized everything with a forward-compatible `category` field plus a `categories` stats legend; dropped 2 docker-based entries that cannot run on Android.
+
+**v2.1 expansion (Oct 2026)**: +30 servers → 80 across 18 categories (new: devtools, security, ai-ml), themed around coding & complex-task completion — 18 dev-related entries (6 databases, 2 cloud + 1 AI, 2 observability, 3 docs, 5 devtools). Every new entry was verified live against npm/PyPI registries (HTTP 200); 9 candidate names that failed registry verification were swapped for official equivalents or dropped, and deprecated awslabs packages were replaced by their active successors (aws-iac / aws-billing).
 
 CI runs on every push/PR: schema & consistency validation, plus an online smoke job that verifies every npm/PyPI package still exists and every HTTP endpoint still handshakes (401/403 counts as alive — OAuth-gated), with a weekly scheduled re-check to catch dead packages early. Install writes `enabled=false` (install ≠ start); only installed **and running** servers appear in the chat `/mcp:` slash menu.
 

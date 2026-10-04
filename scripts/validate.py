@@ -7,7 +7,7 @@
  3. transport ∈ {STDIO, HTTP}；STDIO 必有 command/args、HTTP 必有 url（且互斥）；
  4. scope ∈ {agent, coding, all}；enabled 恒 false（安装 ≠ 启动）；
  5. requiresRootfs 与形态一致（STDIO 沙箱 true / HTTP 远端 false）；
- 6. category ∈ 15 类词表，且 categories 统计与实际条目一致；
+ 6. category ∈ 18 类词表（15 既有 + v2.1 新增 devtools/security/ai-ml），且 categories 统计与实际条目一致；
  7. envSchema 每项含 key/required/description；
  8. 索引 ≤ 2MB（App 拉取上限）；
  9. 全仓无凭据泄漏（ghp_/github_pat_/AKIA 指纹扫描）。
@@ -26,6 +26,8 @@ LEGAL_CATEGORIES = {
     "official", "docs", "web-search", "browser", "database", "git", "cloud",
     "observability", "productivity", "desktop", "finance", "design",
     "communication", "location", "data",
+    # v2.1 新增三类（编码扩容：开发效率 / 安全 / 人工智能）
+    "devtools", "security", "ai-ml",
 }
 LEGAL_SCOPES = {"agent", "coding", "all"}
 LEGAL_TRANSPORTS = {"STDIO", "HTTP", "SSE"}
