@@ -2,6 +2,8 @@
 
 **Apex Agent 官方 MCP 服务器仓库** —— 80 台经真实验证的服务器、18 个分类，沙箱（PRoot Ubuntu 内 npx/uvx）与远端（HTTP）双形态，从应用内「市场 → MCP → 官方 MCP 仓库」安装、配置、启动。
 
+> **v2.1.1 去重修复**：删除与宿主 App `SANDBOX_PRESET_SERVERS` 重复的 fs-sandbox / memory-sandbox / everything-sandbox 3 台（宿主每次启动幂等预置，市场重复展示）；补位 postman / android-emulator / mcp-inspector 3 台，总量保持 80 台。
+
 [English](#english) below.
 
 ## v2 重组说明（2026-10）
@@ -24,7 +26,7 @@
 
 | 类 | 数 | 服务器 |
 |---|---|---|
-| official 官方参考实现 | 7 | fs-sandbox、memory-sandbox、everything-sandbox、sequential-thinking、fetch、fetch-python、time |
+| official 官方参考实现 | 4 | sequential-thinking、fetch、fetch-python、time |
 | docs 文档与知识 | 8 | arxiv、aws-docs、context7、context7-remote、deepwiki、microsoft-learn、paper-search、wikipedia |
 | web-search 网络搜索 | 7 | brave-search、tavily、exa、kagi、duckduckgo、firecrawl、omnisearch |
 | browser 浏览器自动化 | 4 | playwright、puppeteer、chrome-devtools、browserbase |
@@ -39,7 +41,7 @@
 | finance 金融支付 | 1 | stripe |
 | design 设计 | 3 | figma-context、blender、quickchart |
 | data 数据源 | 1 | gdrive |
-| devtools 开发效率 | 5 | apifox、gradle、jetbrains、mcp-remote、swagger |
+| devtools 开发效率 | 8 | apifox、gradle、jetbrains、mcp-remote、swagger、postman、android-emulator、mcp-inspector |
 | security 安全 | 1 | semgrep |
 | ai-ml 人工智能 | 1 | aws-bedrock-kb |
 

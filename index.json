@@ -6,7 +6,7 @@
   "categories": {
     "official": {
       "label": "官方参考实现",
-      "count": 7
+      "count": 4
     },
     "docs": {
       "label": "文档与知识",
@@ -66,7 +66,7 @@
     },
     "devtools": {
       "label": "开发效率",
-      "count": 5
+      "count": 8
     },
     "security": {
       "label": "安全",
@@ -79,6 +79,11 @@
   },
   "changelog": [
     {
+      "version": "2.1.1",
+      "date": "2026-10-04",
+      "notes": "去重修复：删除与宿主 SANDBOX_PRESET_SERVERS 重复的 fs-sandbox/memory-sandbox/everything-sandbox 3 台（宿主每次启动幂等预置，市场重复展示）；补位 postman/android-emulator/mcp-inspector 3 台（npm registry 实测，mcp-inspector 为官方调试器——宿主自身即 MCP Host，用它排障市场安装的每一台服务器）；总量保持 80 台。"
+    },
+    {
       "version": "2.0.0",
       "date": "2026-10-03",
       "notes": "v2 重组：并入 Android-Guru-Agent 内置 mcp_catalog 32 台（APK 不再随包分发）；修复 fetch/time 指向不存在 npm 包的问题；新增 microsoft-learn/context7-remote/amap/firecrawl/paper-search/mongodb/supabase/duckdb/neon/elasticsearch 十台（端点与包名逐一经 npm/PyPI/HTTP 握手验证）；全目录按 15 类分类（category 字段，前向兼容）。"
@@ -90,31 +95,6 @@
     }
   ],
   "servers": [
-    {
-      "name": "everything-sandbox",
-      "description": "官方测试参考服务器：覆盖 MCP 全能力面（工具/资源/提示词/采样）——验证沙箱 MCP 管线的首选。",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-everything"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "modelcontextprotocol",
-      "tags": [
-        "testing",
-        "official",
-        "reference"
-      ],
-      "category": "official",
-      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/everything",
-      "envSchema": [],
-      "notes": "全能力面冒烟测试用。"
-    },
     {
       "name": "fetch",
       "description": "网页抓取服务器（node 纯 JS 形态）：URL → 干净 Markdown，内置分页与机器人规避。v2 修复：原 @modelcontextprotocol/server-fetch npm 包不存在，已切换为 @kazuph/mcp-fetch。",
@@ -161,63 +141,6 @@
       "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
       "envSchema": [],
       "notes": "需要 rootfs 内含 uv（uvx 自动拉起 mcp-server-fetch）。"
-    },
-    {
-      "name": "fs-sandbox",
-      "description": "官方文件系统 MCP（沙箱形态）：在 /workspace 作用域内读写文件、建目录、移动与搜索——内置 fs 的 npx 双胞胎。",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/workspace"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "modelcontextprotocol",
-      "tags": [
-        "files",
-        "official",
-        "workspace"
-      ],
-      "category": "official",
-      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
-      "envSchema": [
-        {
-          "key": "WORKSPACE",
-          "required": false,
-          "description": "可选：覆盖默认工作区路径（默认 /workspace）"
-        }
-      ],
-      "notes": "路径参数即允许访问的目录；沙箱形态以 /workspace 为作用域。"
-    },
-    {
-      "name": "memory-sandbox",
-      "description": "官方知识图谱记忆 MCP（沙箱形态）：实体/关系/观察的持久化记忆——内置 memory 的 npx 双胞胎。",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "agent",
-      "requiresRootfs": true,
-      "vendor": "modelcontextprotocol",
-      "tags": [
-        "memory",
-        "official",
-        "knowledge-graph"
-      ],
-      "category": "official",
-      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
-      "envSchema": [],
-      "notes": "跨会话记忆外脑；与内置 memory MCP 同源同构。"
     },
     {
       "name": "sequential-thinking",
@@ -2463,6 +2386,110 @@
         }
       ],
       "notes": "需有 Bedrock 知识库访问权限的 AWS 凭据。"
+    },
+    {
+      "name": "postman",
+      "description": "Postman API 平台集成：工作区/集合/环境/模拟服务管理，API 调试与自动化测试直接在对话里闭环。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "postman-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "postman-labs",
+      "tags": [
+        "postman",
+        "api",
+        "testing",
+        "rest",
+        "collections"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/postmanlabs/mcp-postman",
+      "envSchema": [
+        {
+          "key": "POSTMAN_API_KEY",
+          "required": true,
+          "description": "Postman API Key（postman.com → Settings → API keys 生成）"
+        }
+      ],
+      "notes": "必填 POSTMAN_API_KEY；支持集合导入导出、环境变量管理、mock 服务与 API 文档查询。"
+    },
+    {
+      "name": "android-emulator",
+      "description": "Android 模拟器控制（ADB 语义层）：应用安装/启动、tap/swipe/input 注入、截屏与 logcat 抓取——设备自动化测试闭环。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "android-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "zcaceres",
+      "tags": [
+        "android",
+        "adb",
+        "emulator",
+        "mobile",
+        "testing"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/zcaceres/android-mcp-server",
+      "envSchema": [
+        {
+          "key": "ANDROID_HOME",
+          "required": false,
+          "description": "可选：Android SDK 路径（默认自动探测 adb；沙箱内需确保 adb 可达设备/模拟器）"
+        }
+      ],
+      "notes": "沙箱内需能访问宿主 adb（网络 adb connect 或 USB 直通）；工具含 install/tap/swipe/type/screenshot/logcat。"
+    },
+    {
+      "name": "mcp-inspector",
+      "description": "官方 MCP Inspector：连接任意 MCP 服务器做交互式调试——列工具/资源/提示词、试调参数、查看 JSON-RPC 报文与本机会话管理。宿主 App 自身即 MCP Host，用它排障自建与市场装的每一台服务器。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/inspector"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "mcp",
+        "debugging",
+        "inspector",
+        "official",
+        "devtools"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/modelcontextprotocol/inspector",
+      "envSchema": [
+        {
+          "key": "MCP_AUTO_OPEN",
+          "required": false,
+          "description": "可选：true 时自动打开浏览器 UI（沙箱内建议 false，走 CLI 模式）"
+        },
+        {
+          "key": "CLIENT_PORT",
+          "required": false,
+          "description": "可选：Inspector 客户端端口（默认 6274）"
+        }
+      ],
+      "notes": "调试已有服务器：npx @modelcontextprotocol/inspector --cli <server-cmd> --method tools/list；沙箱内 CLI 模式为主，避免依赖桌面浏览器。"
     }
   ]
 }
