@@ -2,7 +2,7 @@
   "schema": "apex-mcp-hub-v1",
   "name": "Apex MCP Hub",
   "description": "Apex Agent official MCP server repository — 80 verified servers across 18 categories (sandbox npx/uvx + hosted remote HTTP), installable on demand from the in-app Market.",
-  "count": 80,
+  "count": 94,
   "categories": {
     "official": {
       "label": "官方参考实现",
@@ -66,11 +66,11 @@
     },
     "devtools": {
       "label": "开发效率",
-      "count": 8
+      "count": 9
     },
     "security": {
       "label": "安全",
-      "count": 1
+      "count": 14
     },
     "ai-ml": {
       "label": "人工智能",
@@ -78,6 +78,11 @@
     }
   },
   "changelog": [
+    {
+      "version": "2.2.0",
+      "date": "2026-10-06",
+      "notes": "逆向工程与语义编程扩容：新增 14 台（GitHub API / npm / PyPI registry 逐一实测，安装命令均取自官方 README）——静态分析 ghidra(LaurieWired 10k★)/ida-pro(mrexodia 12k★)/radare2(radareorg 官方)/binary-ninja(fosdickio)/jadx+apktool(zinja-coder 逆向套件)；动态分析 frida(npm)/android-mcp-server(minhalvp 810★)；网络侦察 shodan(@burtthecoder)/nmap(PyPI mcp-nmap)/burp(BurpMCP-Ultra supergateway 桥接)；取证 capstone/volatility；语义编程 serena(PyPI serena-agent 30k★)。security 类 1→14，devtools 类 8→9，总量 94 台。跳过与存量重名的 git/fetch/sqlite/postgres/playwright/context7/desktop-commander/semgrep/server-github 等 9 台及与宿主内置重复的 filesystem/memory（沿用 v2.1 去重原则）。yara(ThreatFlux YaraFlux) 因 PyPI 未发包、无法过 --online 冒烟暂缓，收录在 android-guru-mcp-hub Web 枢纽。"
+    },
     {
       "version": "2.1.1",
       "date": "2026-10-04",
@@ -2177,6 +2182,39 @@
       "notes": "官方 reference servers 已归档（servers-archived），仍可安装使用。 需先把 Google Cloud OAuth 凭据文件放进沙箱。"
     },
     {
+      "name": "android-emulator",
+      "description": "Android 模拟器控制（ADB 语义层）：应用安装/启动、tap/swipe/input 注入、截屏与 logcat 抓取——设备自动化测试闭环。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "android-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "zcaceres",
+      "tags": [
+        "android",
+        "adb",
+        "emulator",
+        "mobile",
+        "testing"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/zcaceres/android-mcp-server",
+      "envSchema": [
+        {
+          "key": "ANDROID_HOME",
+          "required": false,
+          "description": "可选：Android SDK 路径（默认自动探测 adb；沙箱内需确保 adb 可达设备/模拟器）"
+        }
+      ],
+      "notes": "沙箱内需能访问宿主 adb（网络 adb connect 或 USB 直通）；工具含 install/tap/swipe/type/screenshot/logcat。"
+    },
+    {
       "name": "apifox",
       "description": "Apifox 官方 MCP：把 Apifox 项目里的接口文档喂给 AI——API 结构、字段说明与示例数据直接可查，接口变更实时同步——前后端联调与接口对接不再靠截图与文档传来传去。",
       "transport": "STDIO",
@@ -2265,6 +2303,44 @@
       "notes": "需在 IDE 内安装官方 MCP Server 插件后配合使用。"
     },
     {
+      "name": "mcp-inspector",
+      "description": "官方 MCP Inspector：连接任意 MCP 服务器做交互式调试——列工具/资源/提示词、试调参数、查看 JSON-RPC 报文与本机会话管理。宿主 App 自身即 MCP Host，用它排障自建与市场装的每一台服务器。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/inspector"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "modelcontextprotocol",
+      "tags": [
+        "mcp",
+        "debugging",
+        "inspector",
+        "official",
+        "devtools"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/modelcontextprotocol/inspector",
+      "envSchema": [
+        {
+          "key": "MCP_AUTO_OPEN",
+          "required": false,
+          "description": "可选：true 时自动打开浏览器 UI（沙箱内建议 false，走 CLI 模式）"
+        },
+        {
+          "key": "CLIENT_PORT",
+          "required": false,
+          "description": "可选：Inspector 客户端端口（默认 6274）"
+        }
+      ],
+      "notes": "调试已有服务器：npx @modelcontextprotocol/inspector --cli <server-cmd> --method tools/list；沙箱内 CLI 模式为主，避免依赖桌面浏览器。"
+    },
+    {
       "name": "mcp-remote",
       "description": "远端 MCP OAuth 代理（punkpeye）：让只支持 STDIO 的客户端也能连远端 HTTP 服务器——自动处理 OAuth 授权与令牌缓存，支持自定义头与资源指示——远端生态的万能转接头。",
       "transport": "STDIO",
@@ -2291,6 +2367,69 @@
       "notes": "把 URL 参数换成目标远端服务器（可加 --header 注入令牌）。"
     },
     {
+      "name": "postman",
+      "description": "Postman API 平台集成：工作区/集合/环境/模拟服务管理，API 调试与自动化测试直接在对话里闭环。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "postman-mcp-server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "postman-labs",
+      "tags": [
+        "postman",
+        "api",
+        "testing",
+        "rest",
+        "collections"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/postmanlabs/mcp-postman",
+      "envSchema": [
+        {
+          "key": "POSTMAN_API_KEY",
+          "required": true,
+          "description": "Postman API Key（postman.com → Settings → API keys 生成）"
+        }
+      ],
+      "notes": "必填 POSTMAN_API_KEY；支持集合导入导出、环境变量管理、mock 服务与 API 文档查询。"
+    },
+    {
+      "name": "serena",
+      "description": "基于语言服务器（LSP）的语义级代码分析与编辑 MCP（30k+ 星）：符号查找、引用追踪、语义重构。免费无 token，代码审计与漏洞挖掘标配，支持 TS/Python/Java/Go/Rust 等主流语言。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "serena-agent",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "oraios",
+      "tags": [
+        "lsp",
+        "semantic",
+        "code-review",
+        "free"
+      ],
+      "category": "devtools",
+      "homepage": "https://github.com/oraios/serena",
+      "envSchema": [],
+      "notes": "PyPI serena-agent（注意：PyPI 上无归属的 serena 包是同名 AMQP 库，勿混用）。ide-assistant 上下文最省 token。"
+    },
+    {
       "name": "swagger",
       "description": "Swagger / OpenAPI 调用 MCP：读取配置文件里的 API 定义，把每个端点变成 Agent 可直接调用的工具——对着存量 REST 服务做集成开发与联调测试。",
       "transport": "STDIO",
@@ -2315,6 +2454,311 @@
       "homepage": "https://github.com/marcin-sucharski/swagger-mcp-server",
       "envSchema": [],
       "notes": "先在 /workspace 写好 config.json（含 swaggerUrl 与鉴权头）再启动。"
+    },
+    {
+      "name": "android-mcp-server",
+      "description": "Android MCP（minhalvp，810 星）：ADB 设备控制 —— adb shell、应用管理、logcat 抓取、scrcpy 镜像，真机/模拟器动态分析通道。",
+      "transport": "STDIO",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/opt/android-mcp-server",
+        "run",
+        "server.py"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "minhalvp",
+      "tags": [
+        "reverse",
+        "android",
+        "adb",
+        "dynamic"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/minhalvp/android-mcp-server",
+      "envSchema": [
+        {
+          "key": "ANDROID_SERIAL",
+          "required": false,
+          "description": "多设备时指定目标设备序列号"
+        }
+      ],
+      "notes": "需 git clone 仓库到 /opt 并 uv sync，rootfs 内 adb 可用。"
+    },
+    {
+      "name": "apktool",
+      "description": "Apktool MCP（zinja-coder 逆向套件）：APK 解包/重打包 —— smali 汇编、AndroidManifest 解析、资源解密，改包与去签名验证工作流。",
+      "transport": "STDIO",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/opt/apktool-mcp-server",
+        "run",
+        "apktool_mcp_server.py"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "zinja-coder",
+      "tags": [
+        "reverse",
+        "android",
+        "smali",
+        "repackage"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/zinja-coder/apktool-mcp-server",
+      "envSchema": [],
+      "notes": "需 git clone 仓库到 /opt，rootfs 内 apktool 在 PATH。"
+    },
+    {
+      "name": "binary-ninja",
+      "description": "Binary Ninja MCP（fosdickio）：商业二进制分析平台集成 —— HLIL/MLIL/LLIL 三层中间表示、跨平台反编译、脚本化批处理。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "binary-ninja-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "fosdickio",
+      "tags": [
+        "reverse",
+        "decompile",
+        "binary-ninja",
+        "il"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/fosdickio/binary_ninja_mcp",
+      "envSchema": [],
+      "notes": "npm binary-ninja-mcp。需本机安装 Binary Ninja（商业授权）。"
+    },
+    {
+      "name": "burp",
+      "description": "Burp Suite MCP（BurpMCP-Ultra，149 工具）：Web 安全测试平台集成 —— 请求重放、扫描器联动，经 supergateway 桥接其 SSE 端点。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "supergateway",
+        "--sse",
+        "http://127.0.0.1:9876/",
+        "--header",
+        "Authorization: Bearer <token>"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "Cy-S3c",
+      "tags": [
+        "web-security",
+        "burp",
+        "pentest",
+        "proxy"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/Cy-S3c/BurpMCP-Ultra",
+      "envSchema": [],
+      "notes": "需在 Burp Suite 安装 BurpMCP-Ultra 扩展（BApp Store），令牌见扩展 Server 页；supergateway 为其官方 README 给出的 Claude Desktop stdio 桥接方案。"
+    },
+    {
+      "name": "capstone",
+      "description": "Capstone MCP（Tokeii0）：轻量反汇编引擎 —— x86/ARM/MIPS 等多架构指令级反汇编，脚本化二进制批处理。",
+      "transport": "STDIO",
+      "command": "python",
+      "args": [
+        "-m",
+        "capstone_mcp.server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "Tokeii0",
+      "tags": [
+        "reverse",
+        "disasm",
+        "capstone",
+        "multi-arch"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/Tokeii0/capstone-mcp-server",
+      "envSchema": [],
+      "notes": "需 git clone 仓库到 /opt 并 pip install -e .，python -m capstone_mcp.server 启动。"
+    },
+    {
+      "name": "frida",
+      "description": "Frida MCP（npm frida-mcp）：动态插桩框架 Frida 17 集成 —— hook 任意函数、读写内存、跟踪调用、绕过反调试，移动端动态分析之王。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "frida-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "yfe404",
+      "tags": [
+        "reverse",
+        "dynamic",
+        "hook",
+        "android"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/yfe404/frida-mcp",
+      "envSchema": [
+        {
+          "key": "ANDROID_SERIAL",
+          "required": false,
+          "description": "多设备时指定目标设备序列号（如 127.0.0.1:5555 无线调试）"
+        }
+      ],
+      "notes": "rootfs 需 pip 安装 frida-tools，USB/无线连接目标设备。"
+    },
+    {
+      "name": "ghidra",
+      "description": "GhidraMCP（LaurieWired，10k+ 星）：接入 NSA 开源逆向框架 Ghidra —— 反编译伪代码、函数重命名、数据类型标注、交叉引用，静态分析核心引擎。",
+      "transport": "STDIO",
+      "command": "python",
+      "args": [
+        "/opt/GhidraMCP/bridge_mcp_ghidra.py"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "LaurieWired",
+      "tags": [
+        "reverse",
+        "decompile",
+        "ghidra",
+        "static"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/LaurieWired/GhidraMCP",
+      "envSchema": [],
+      "notes": "需先 git clone 仓库到 /opt/GhidraMCP，并在 Ghidra（File→Install Extensions）安装 GhidraMCP 插件；bridge 连接 Ghidra 插件的 8080 服务。"
+    },
+    {
+      "name": "ida-pro",
+      "description": "IDA Pro MCP（mrexodia，12k+ 星）：Hex-Rays IDA 9 深度集成 —— 反编译、伪代码编辑、函数签名、调试器联动，商业级逆向工作流。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "ida-pro-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "mrexodia",
+      "tags": [
+        "reverse",
+        "decompile",
+        "ida",
+        "hex-rays"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/mrexodia/ida-pro-mcp",
+      "envSchema": [],
+      "notes": "PyPI ida-pro-mcp 1.4.0。需先在 IDA 端安装插件（ida-pro-mcp --install），且 rootfs 内有 IDA 授权环境。"
+    },
+    {
+      "name": "jadx",
+      "description": "JADX MCP（zinja-coder 逆向套件）：Java/Android 反编译器 —— DEX→Java 源码、资源还原、混淆映射，APK 静态审计首选。",
+      "transport": "STDIO",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/opt/jadx_mcp_server",
+        "run",
+        "jadx_mcp.py"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "zinja-coder",
+      "tags": [
+        "reverse",
+        "android",
+        "apk",
+        "decompile"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/zinja-coder/jadx-mcp-server",
+      "envSchema": [],
+      "notes": "需 git clone jadx-mcp-server 到 /opt，并在 JADX GUI 安装 JADX-AI 插件（zinja-coder/jadx-ai-mcp）。"
+    },
+    {
+      "name": "nmap",
+      "description": "Nmap MCP（PyPI mcp-nmap）：网络发现与端口扫描 —— 服务/OS 识别、NSE 脚本执行，内网渗透前侦察。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mcp-nmap"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "zalaid",
+      "tags": [
+        "recon",
+        "scan",
+        "nmap",
+        "network"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/zalaid/mcp-nmap",
+      "envSchema": [],
+      "notes": "PyPI 实测 0.1.0。rootfs 需 apt 安装 nmap。"
+    },
+    {
+      "name": "radare2",
+      "description": "Radare2 MCP（radareorg 官方）：命令行逆向框架 r2 的 MCP 封装 —— 十六进制、反汇编、签名识别，轻量级全能分析器，可连接本地或远程 r2/iaito 会话。",
+      "transport": "STDIO",
+      "command": "r2pm",
+      "args": [
+        "-r",
+        "r2mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "radareorg",
+      "tags": [
+        "reverse",
+        "disasm",
+        "radare2",
+        "cli"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/radareorg/radare2-mcp",
+      "envSchema": [],
+      "notes": "经 r2pm（radare2 包管理器）一键拉起，rootfs 需先 apt 安装 radare2。"
     },
     {
       "name": "semgrep",
@@ -2346,6 +2790,65 @@
         }
       ],
       "notes": "需 rootfs 内预装 semgrep CLI（pip install semgrep 或 npm i -g semgrep）。"
+    },
+    {
+      "name": "shodan",
+      "description": "Shodan MCP（npm @burtthecoder/mcp-shodan）：全网设备搜索引擎 —— 端口/服务/漏洞指纹查询、地理定位，互联网暴露面情报收集。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@burtthecoder/mcp-shodan"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "burtthecoder",
+      "tags": [
+        "recon",
+        "osint",
+        "shodan",
+        "intelligence"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/burtthecoder/mcp-shodan",
+      "envSchema": [
+        {
+          "key": "SHODAN_API_KEY",
+          "required": true,
+          "description": "Shodan API Key（shodan.io 注册获取）"
+        }
+      ],
+      "notes": "npm registry 实测 1.0.32。env 注入 SHODAN_API_KEY 后可用。"
+    },
+    {
+      "name": "volatility",
+      "description": "Volatility MCP（Gaffx）：内存取证框架 volatility3 集成 —— 进程/网络/注册表/凭证提取，恶意代码内存行为分析与取证。",
+      "transport": "STDIO",
+      "command": "python",
+      "args": [
+        "/opt/volatility-mcp/vol_mcp_server.py",
+        "-i",
+        "/root/memdump.raw"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "Gaffx",
+      "tags": [
+        "forensics",
+        "memory",
+        "volatility",
+        "malware"
+      ],
+      "category": "security",
+      "homepage": "https://github.com/Gaffx/volatility-mcp",
+      "envSchema": [],
+      "notes": "需 git clone 仓库到 /opt 并安装依赖；-i 参数指定待分析内存镜像路径。"
     },
     {
       "name": "aws-bedrock-kb",
@@ -2386,110 +2889,6 @@
         }
       ],
       "notes": "需有 Bedrock 知识库访问权限的 AWS 凭据。"
-    },
-    {
-      "name": "postman",
-      "description": "Postman API 平台集成：工作区/集合/环境/模拟服务管理，API 调试与自动化测试直接在对话里闭环。",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "postman-mcp-server"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "postman-labs",
-      "tags": [
-        "postman",
-        "api",
-        "testing",
-        "rest",
-        "collections"
-      ],
-      "category": "devtools",
-      "homepage": "https://github.com/postmanlabs/mcp-postman",
-      "envSchema": [
-        {
-          "key": "POSTMAN_API_KEY",
-          "required": true,
-          "description": "Postman API Key（postman.com → Settings → API keys 生成）"
-        }
-      ],
-      "notes": "必填 POSTMAN_API_KEY；支持集合导入导出、环境变量管理、mock 服务与 API 文档查询。"
-    },
-    {
-      "name": "android-emulator",
-      "description": "Android 模拟器控制（ADB 语义层）：应用安装/启动、tap/swipe/input 注入、截屏与 logcat 抓取——设备自动化测试闭环。",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "android-mcp-server"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "zcaceres",
-      "tags": [
-        "android",
-        "adb",
-        "emulator",
-        "mobile",
-        "testing"
-      ],
-      "category": "devtools",
-      "homepage": "https://github.com/zcaceres/android-mcp-server",
-      "envSchema": [
-        {
-          "key": "ANDROID_HOME",
-          "required": false,
-          "description": "可选：Android SDK 路径（默认自动探测 adb；沙箱内需确保 adb 可达设备/模拟器）"
-        }
-      ],
-      "notes": "沙箱内需能访问宿主 adb（网络 adb connect 或 USB 直通）；工具含 install/tap/swipe/type/screenshot/logcat。"
-    },
-    {
-      "name": "mcp-inspector",
-      "description": "官方 MCP Inspector：连接任意 MCP 服务器做交互式调试——列工具/资源/提示词、试调参数、查看 JSON-RPC 报文与本机会话管理。宿主 App 自身即 MCP Host，用它排障自建与市场装的每一台服务器。",
-      "transport": "STDIO",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/inspector"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "modelcontextprotocol",
-      "tags": [
-        "mcp",
-        "debugging",
-        "inspector",
-        "official",
-        "devtools"
-      ],
-      "category": "devtools",
-      "homepage": "https://github.com/modelcontextprotocol/inspector",
-      "envSchema": [
-        {
-          "key": "MCP_AUTO_OPEN",
-          "required": false,
-          "description": "可选：true 时自动打开浏览器 UI（沙箱内建议 false，走 CLI 模式）"
-        },
-        {
-          "key": "CLIENT_PORT",
-          "required": false,
-          "description": "可选：Inspector 客户端端口（默认 6274）"
-        }
-      ],
-      "notes": "调试已有服务器：npx @modelcontextprotocol/inspector --cli <server-cmd> --method tools/list；沙箱内 CLI 模式为主，避免依赖桌面浏览器。"
     }
   ]
 }
