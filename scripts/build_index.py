@@ -11,8 +11,8 @@
 校验规则（--check 下前 7 条任何一条失败即退出码 1；第 8 条为收录质量预警，只提示不拦截——
  v2.1 前的存量条目描述较短属正常，新条目按 80-160 字 / tags 3-6 收录）：
  1. index.json 可解析、schema 为 apex-mcp-hub-v1；
- 2. categories 词表 = 18 类（15 既有 + devtools/security/ai-ml），每类 label 非空，
-    统计 count 与 servers[] 实际分布一致，顶层 count = len(servers)；
+ 2. categories 词表 = 19 类（15 既有 + devtools/security/ai-ml + v2.3 新增 reverse-engineering），每类
+    label 非空，统计 count 与 servers[] 实际分布一致，顶层 count = len(servers)；
  3. name 全局唯一、格式 ^[a-z0-9][a-z0-9-]{1,48}$；
  4. transport ∈ {STDIO, HTTP, SSE}；STDIO 必有 command/args 且无 url；HTTP 必有 https url 且无 command；
  5. enabled 恒 false（安装 ≠ 启动）；runInSandbox / requiresRootfs 与形态一致（STDIO true / HTTP false）；
@@ -29,11 +29,12 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX = os.path.join(ROOT, "index.json")
 
-# 18 类词表：15 既有 + v2.1 新增三类（顺序即目录呈现顺序）
+# 19 类词表：15 既有 + v2.1 新增三类 + v2.3 新增逆向工程（顺序即目录呈现顺序）
 CATEGORY_ORDER = [
     "official", "docs", "web-search", "browser", "database", "git", "cloud",
     "observability", "productivity", "desktop", "finance", "design",
-    "communication", "location", "data", "devtools", "security", "ai-ml",
+    "communication", "location", "data", "devtools", "reverse-engineering",
+    "security", "ai-ml",
 ]
 LEGAL_CATEGORIES = set(CATEGORY_ORDER)
 LEGAL_SCOPES = {"agent", "coding", "all"}
