@@ -2,7 +2,7 @@
   "schema": "apex-mcp-hub-v1",
   "name": "Apex MCP Hub",
   "description": "Apex Agent official MCP server repository — 80 verified servers across 18 categories (sandbox npx/uvx + hosted remote HTTP), installable on demand from the in-app Market.",
-  "count": 94,
+  "count": 101,
   "categories": {
     "official": {
       "label": "官方参考实现",
@@ -68,9 +68,13 @@
       "label": "开发效率",
       "count": 9
     },
+    "reverse-engineering": {
+      "label": "逆向工程",
+      "count": 15
+    },
     "security": {
       "label": "安全",
-      "count": 14
+      "count": 6
     },
     "ai-ml": {
       "label": "人工智能",
@@ -78,6 +82,11 @@
     }
   },
   "changelog": [
+    {
+      "version": "2.3.0",
+      "date": "2026-10-07",
+      "notes": "逆向工程独立成类：新增 reverse-engineering 类（18→19 类），security 中 10 台逆向工具（静态 7：ghidra/ida-pro/radare2/binary-ninja/jadx/apktool/capstone；动态 2：frida/android-mcp-server；取证 1：volatility）迁入，security 聚焦攻防与情报（semgrep/shodan/nmap/burp）。新增 7 台（npm/PyPI registry 逐一实测 200）：逆向 5 —— reversecore(PyPI reversecore-mcp 151 工具一体化)/mitmproxy(PyPI 抓包重放协议逆向)/gdb(PyPI native 调试)/cyberchef(npm 504 变换解码)/mobsf(clone 形态移动 SAST+DAST)；安全 2 —— cve(npm 41 工具 11 源漏洞情报)/metasploit(PyPI 授权渗透)。总量 94→101，reverse-engineering 15 台 / security 6 台。"
+    },
     {
       "version": "2.2.0",
       "date": "2026-10-06",
@@ -2478,7 +2487,7 @@
         "adb",
         "dynamic"
       ],
-      "category": "security",
+      "category": "reverse-engineering",
       "homepage": "https://github.com/minhalvp/android-mcp-server",
       "envSchema": [
         {
@@ -2512,7 +2521,7 @@
         "smali",
         "repackage"
       ],
-      "category": "security",
+      "category": "reverse-engineering",
       "homepage": "https://github.com/zinja-coder/apktool-mcp-server",
       "envSchema": [],
       "notes": "需 git clone 仓库到 /opt，rootfs 内 apktool 在 PATH。"
@@ -2538,10 +2547,343 @@
         "binary-ninja",
         "il"
       ],
-      "category": "security",
+      "category": "reverse-engineering",
       "homepage": "https://github.com/fosdickio/binary_ninja_mcp",
       "envSchema": [],
       "notes": "npm binary-ninja-mcp。需本机安装 Binary Ninja（商业授权）。"
+    },
+    {
+      "name": "capstone",
+      "description": "Capstone MCP（Tokeii0）：轻量反汇编引擎 —— x86/ARM/MIPS 等多架构指令级反汇编，脚本化二进制批处理。",
+      "transport": "STDIO",
+      "command": "python",
+      "args": [
+        "-m",
+        "capstone_mcp.server"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "Tokeii0",
+      "tags": [
+        "reverse",
+        "disasm",
+        "capstone",
+        "multi-arch"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/Tokeii0/capstone-mcp-server",
+      "envSchema": [],
+      "notes": "需 git clone 仓库到 /opt 并 pip install -e .，python -m capstone_mcp.server 启动。"
+    },
+    {
+      "name": "cyberchef",
+      "description": "CyberChef MCP（npm cyberchef-mcp）：GCHQ 网络瑞士军刀 504 项数据变换全量暴露 —— 编解码、加解密、压缩解包、哈希、取证残片重组，逆向中的字符串/密文/数据流转全能解码台。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "cyberchef-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "doublegate",
+      "tags": [
+        "reverse",
+        "decode",
+        "crypto",
+        "forensics"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/doublegate/CyberChef-MCP",
+      "envSchema": [],
+      "notes": "npm registry 实测 4.2.0；纯 JS 无原生模块，arm64 兼容。"
+    },
+    {
+      "name": "frida",
+      "description": "Frida MCP（npm frida-mcp）：动态插桩框架 Frida 17 集成 —— hook 任意函数、读写内存、跟踪调用、绕过反调试，移动端动态分析之王。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "-y",
+        "frida-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "yfe404",
+      "tags": [
+        "reverse",
+        "dynamic",
+        "hook",
+        "android"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/yfe404/frida-mcp",
+      "envSchema": [
+        {
+          "key": "ANDROID_SERIAL",
+          "required": false,
+          "description": "多设备时指定目标设备序列号（如 127.0.0.1:5555 无线调试）"
+        }
+      ],
+      "notes": "rootfs 需 pip 安装 frida-tools，USB/无线连接目标设备。"
+    },
+    {
+      "name": "gdb",
+      "description": "GDB MCP（PyPI gdb-mcp）：GNU 调试器驱动集成 —— 断点/单步/内存查看、寄存器读写、调用栈回溯、崩溃分析，让 Agent 直接操纵 GDB 进行 native so 动态调试与漏洞复现。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "gdb-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "datobena",
+      "tags": [
+        "reverse",
+        "debug",
+        "gdb",
+        "dynamic"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/datobena/gdb-mcp",
+      "envSchema": [],
+      "notes": "PyPI 实测 1.0.1；rootfs 需 apt 安装 gdb，arm64 目标建议安装 gdb-multiarch。"
+    },
+    {
+      "name": "ghidra",
+      "description": "GhidraMCP（LaurieWired，10k+ 星）：接入 NSA 开源逆向框架 Ghidra —— 反编译伪代码、函数重命名、数据类型标注、交叉引用，静态分析核心引擎。",
+      "transport": "STDIO",
+      "command": "python",
+      "args": [
+        "/opt/GhidraMCP/bridge_mcp_ghidra.py"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "LaurieWired",
+      "tags": [
+        "reverse",
+        "decompile",
+        "ghidra",
+        "static"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/LaurieWired/GhidraMCP",
+      "envSchema": [],
+      "notes": "需先 git clone 仓库到 /opt/GhidraMCP，并在 Ghidra（File→Install Extensions）安装 GhidraMCP 插件；bridge 连接 Ghidra 插件的 8080 服务。"
+    },
+    {
+      "name": "ida-pro",
+      "description": "IDA Pro MCP（mrexodia，12k+ 星）：Hex-Rays IDA 9 深度集成 —— 反编译、伪代码编辑、函数签名、调试器联动，商业级逆向工作流。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "ida-pro-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "mrexodia",
+      "tags": [
+        "reverse",
+        "decompile",
+        "ida",
+        "hex-rays"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/mrexodia/ida-pro-mcp",
+      "envSchema": [],
+      "notes": "PyPI ida-pro-mcp 1.4.0。需先在 IDA 端安装插件（ida-pro-mcp --install），且 rootfs 内有 IDA 授权环境。"
+    },
+    {
+      "name": "jadx",
+      "description": "JADX MCP（zinja-coder 逆向套件）：Java/Android 反编译器 —— DEX→Java 源码、资源还原、混淆映射，APK 静态审计首选。",
+      "transport": "STDIO",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/opt/jadx_mcp_server",
+        "run",
+        "jadx_mcp.py"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "zinja-coder",
+      "tags": [
+        "reverse",
+        "android",
+        "apk",
+        "decompile"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/zinja-coder/jadx-mcp-server",
+      "envSchema": [],
+      "notes": "需 git clone jadx-mcp-server 到 /opt，并在 JADX GUI 安装 JADX-AI 插件（zinja-coder/jadx-ai-mcp）。"
+    },
+    {
+      "name": "mitmproxy",
+      "description": "mitmproxy MCP（PyPI mitmproxy-mcp）：HTTP/HTTPS 流量中间人代理集成 —— 抓包检索、请求改写重放、TLS 指纹伪装、会话令牌提取复用、OpenAPI 规格反推，私有协议逆向与 API 逆向核心工具。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "mitmproxy-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "snapspecter",
+      "tags": [
+        "reverse",
+        "protocol",
+        "mitm",
+        "traffic"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/snapspecter/mitmproxy-mcp",
+      "envSchema": [
+        {
+          "key": "MITM_LISTEN_PORT",
+          "required": false,
+          "description": "代理监听端口（默认 8080）"
+        }
+      ],
+      "notes": "PyPI 实测 0.6.1（125 星）；移动端抓包将设备 Wi-Fi 代理指向沙箱地址并安装 CA 证书。"
+    },
+    {
+      "name": "mobsf",
+      "description": "MobSF MCP（pullkitsan/mobsf-mcp-server）：移动安全框架集成 —— APK/IPA 一键静态+动态扫描、Manifest 权限审计、硬编码密钥与组件暴露检测，移动应用安全评估标准工具。",
+      "transport": "STDIO",
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/opt/mobsf-mcp-server/server.ts"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "pullkitsan",
+      "tags": [
+        "reverse",
+        "android",
+        "sast",
+        "mobsf"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/pullkitsan/mobsf-mcp-server",
+      "envSchema": [
+        {
+          "key": "MOBSF_URL",
+          "required": true,
+          "description": "MobSF 实例地址（默认 http://127.0.0.1:8000）"
+        },
+        {
+          "key": "MOBSF_API_KEY",
+          "required": true,
+          "description": "MobSF REST API Key（见 MobSF 控制台设置页）"
+        }
+      ],
+      "notes": "需 git clone 仓库到 /opt/mobsf-mcp-server 并 npm install；rootfs 需另装 MobSF 后以其 REST API 交互。"
+    },
+    {
+      "name": "radare2",
+      "description": "Radare2 MCP（radareorg 官方）：命令行逆向框架 r2 的 MCP 封装 —— 十六进制、反汇编、签名识别，轻量级全能分析器，可连接本地或远程 r2/iaito 会话。",
+      "transport": "STDIO",
+      "command": "r2pm",
+      "args": [
+        "-r",
+        "r2mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "radareorg",
+      "tags": [
+        "reverse",
+        "disasm",
+        "radare2",
+        "cli"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/radareorg/radare2-mcp",
+      "envSchema": [],
+      "notes": "经 r2pm（radare2 包管理器）一键拉起，rootfs 需先 apt 安装 radare2。"
+    },
+    {
+      "name": "reversecore",
+      "description": "Reversecore MCP（PyPI reversecore-mcp，151 工具）：一体化逆向工程套件 —— 静态分析、恶意软件检测、漏洞研究、数字取证、源码审计，安全优先设计，单一接口封装十余类分析工具链。",
+      "transport": "STDIO",
+      "command": "uvx",
+      "args": [
+        "reversecore-mcp"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "sjkim1127",
+      "tags": [
+        "reverse",
+        "malware",
+        "forensics",
+        "all-in-one"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/sjkim1127/Reversecore_MCP",
+      "envSchema": [],
+      "notes": "PyPI 实测 3.0.5（206 星，FastMCP）；根目录装好基础工具链（yara/binutils 等）后开箱即用。"
+    },
+    {
+      "name": "volatility",
+      "description": "Volatility MCP（Gaffx）：内存取证框架 volatility3 集成 —— 进程/网络/注册表/凭证提取，恶意代码内存行为分析与取证。",
+      "transport": "STDIO",
+      "command": "python",
+      "args": [
+        "/opt/volatility-mcp/vol_mcp_server.py",
+        "-i",
+        "/root/memdump.raw"
+      ],
+      "env": {},
+      "runInSandbox": true,
+      "enabled": false,
+      "scope": "coding",
+      "requiresRootfs": true,
+      "vendor": "Gaffx",
+      "tags": [
+        "forensics",
+        "memory",
+        "volatility",
+        "malware"
+      ],
+      "category": "reverse-engineering",
+      "homepage": "https://github.com/Gaffx/volatility-mcp",
+      "envSchema": [],
+      "notes": "需 git clone 仓库到 /opt 并安装依赖；-i 参数指定待分析内存镜像路径。"
     },
     {
       "name": "burp",
@@ -2574,140 +2916,66 @@
       "notes": "需在 Burp Suite 安装 BurpMCP-Ultra 扩展（BApp Store），令牌见扩展 Server 页；supergateway 为其官方 README 给出的 Claude Desktop stdio 桥接方案。"
     },
     {
-      "name": "capstone",
-      "description": "Capstone MCP（Tokeii0）：轻量反汇编引擎 —— x86/ARM/MIPS 等多架构指令级反汇编，脚本化二进制批处理。",
-      "transport": "STDIO",
-      "command": "python",
-      "args": [
-        "-m",
-        "capstone_mcp.server"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "Tokeii0",
-      "tags": [
-        "reverse",
-        "disasm",
-        "capstone",
-        "multi-arch"
-      ],
-      "category": "security",
-      "homepage": "https://github.com/Tokeii0/capstone-mcp-server",
-      "envSchema": [],
-      "notes": "需 git clone 仓库到 /opt 并 pip install -e .，python -m capstone_mcp.server 启动。"
-    },
-    {
-      "name": "frida",
-      "description": "Frida MCP（npm frida-mcp）：动态插桩框架 Frida 17 集成 —— hook 任意函数、读写内存、跟踪调用、绕过反调试，移动端动态分析之王。",
+      "name": "cve",
+      "description": "CVE MCP（npm cve-mcp，41 工具 / 11 数据源）：漏洞情报聚合 —— NVD/EPSS/KEV/GHSA/OSV 多源查询、CPE 精确匹配、PoC 与受影响版本区间核查、Nuclei/Metasploit 模块关联，漏洞复现前置情报台。",
       "transport": "STDIO",
       "command": "npx",
       "args": [
         "-y",
-        "frida-mcp"
+        "cve-mcp"
       ],
       "env": {},
       "runInSandbox": true,
       "enabled": false,
       "scope": "coding",
       "requiresRootfs": true,
-      "vendor": "yfe404",
+      "vendor": "badchars",
       "tags": [
-        "reverse",
-        "dynamic",
-        "hook",
-        "android"
+        "cve",
+        "vulnerability",
+        "intelligence",
+        "nvd"
       ],
       "category": "security",
-      "homepage": "https://github.com/yfe404/frida-mcp",
-      "envSchema": [
-        {
-          "key": "ANDROID_SERIAL",
-          "required": false,
-          "description": "多设备时指定目标设备序列号（如 127.0.0.1:5555 无线调试）"
-        }
-      ],
-      "notes": "rootfs 需 pip 安装 frida-tools，USB/无线连接目标设备。"
-    },
-    {
-      "name": "ghidra",
-      "description": "GhidraMCP（LaurieWired，10k+ 星）：接入 NSA 开源逆向框架 Ghidra —— 反编译伪代码、函数重命名、数据类型标注、交叉引用，静态分析核心引擎。",
-      "transport": "STDIO",
-      "command": "python",
-      "args": [
-        "/opt/GhidraMCP/bridge_mcp_ghidra.py"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "LaurieWired",
-      "tags": [
-        "reverse",
-        "decompile",
-        "ghidra",
-        "static"
-      ],
-      "category": "security",
-      "homepage": "https://github.com/LaurieWired/GhidraMCP",
+      "homepage": "https://github.com/badchars/cve-mcp",
       "envSchema": [],
-      "notes": "需先 git clone 仓库到 /opt/GhidraMCP，并在 Ghidra（File→Install Extensions）安装 GhidraMCP 插件；bridge 连接 Ghidra 插件的 8080 服务。"
+      "notes": "npm registry 实测 0.2.0；多数据源可选 key（NVD/OSV 等）经 env 注入增强限额，匿名亦可查询。"
     },
     {
-      "name": "ida-pro",
-      "description": "IDA Pro MCP（mrexodia，12k+ 星）：Hex-Rays IDA 9 深度集成 —— 反编译、伪代码编辑、函数签名、调试器联动，商业级逆向工作流。",
+      "name": "metasploit",
+      "description": "Metasploit MCP（PyPI metasploit-mcp，非官方社区实现）：渗透测试框架集成 —— msfconsole 模块检索、漏洞利用、载荷生成、会话管理，漏洞验证与利用研究（仅限授权测试场景）。",
       "transport": "STDIO",
       "command": "uvx",
       "args": [
-        "ida-pro-mcp"
+        "metasploit-mcp"
       ],
       "env": {},
       "runInSandbox": true,
       "enabled": false,
       "scope": "coding",
       "requiresRootfs": true,
-      "vendor": "mrexodia",
+      "vendor": "setuidloot",
       "tags": [
-        "reverse",
-        "decompile",
-        "ida",
-        "hex-rays"
+        "pentest",
+        "exploit",
+        "metasploit",
+        "offensive"
       ],
       "category": "security",
-      "homepage": "https://github.com/mrexodia/ida-pro-mcp",
-      "envSchema": [],
-      "notes": "PyPI ida-pro-mcp 1.4.0。需先在 IDA 端安装插件（ida-pro-mcp --install），且 rootfs 内有 IDA 授权环境。"
-    },
-    {
-      "name": "jadx",
-      "description": "JADX MCP（zinja-coder 逆向套件）：Java/Android 反编译器 —— DEX→Java 源码、资源还原、混淆映射，APK 静态审计首选。",
-      "transport": "STDIO",
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/opt/jadx_mcp_server",
-        "run",
-        "jadx_mcp.py"
+      "homepage": "https://github.com/setuidloot/MetasploitMCP",
+      "envSchema": [
+        {
+          "key": "MSF_RPC_HOST",
+          "required": false,
+          "description": "msfrpcd 主机（默认 127.0.0.1）"
+        },
+        {
+          "key": "MSF_RPC_PASSWORD",
+          "required": true,
+          "description": "msfrpcd RPC 密码"
+        }
       ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "zinja-coder",
-      "tags": [
-        "reverse",
-        "android",
-        "apk",
-        "decompile"
-      ],
-      "category": "security",
-      "homepage": "https://github.com/zinja-coder/jadx-mcp-server",
-      "envSchema": [],
-      "notes": "需 git clone jadx-mcp-server 到 /opt，并在 JADX GUI 安装 JADX-AI 插件（zinja-coder/jadx-ai-mcp）。"
+      "notes": "PyPI 实测 3.1.0；rootfs 需安装 Metasploit Framework 并启动 msfrpcd（端口 55553），仅限授权渗透测试使用。"
     },
     {
       "name": "nmap",
@@ -2733,32 +3001,6 @@
       "homepage": "https://github.com/zalaid/mcp-nmap",
       "envSchema": [],
       "notes": "PyPI 实测 0.1.0。rootfs 需 apt 安装 nmap。"
-    },
-    {
-      "name": "radare2",
-      "description": "Radare2 MCP（radareorg 官方）：命令行逆向框架 r2 的 MCP 封装 —— 十六进制、反汇编、签名识别，轻量级全能分析器，可连接本地或远程 r2/iaito 会话。",
-      "transport": "STDIO",
-      "command": "r2pm",
-      "args": [
-        "-r",
-        "r2mcp"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "radareorg",
-      "tags": [
-        "reverse",
-        "disasm",
-        "radare2",
-        "cli"
-      ],
-      "category": "security",
-      "homepage": "https://github.com/radareorg/radare2-mcp",
-      "envSchema": [],
-      "notes": "经 r2pm（radare2 包管理器）一键拉起，rootfs 需先 apt 安装 radare2。"
     },
     {
       "name": "semgrep",
@@ -2822,33 +3064,6 @@
         }
       ],
       "notes": "npm registry 实测 1.0.32。env 注入 SHODAN_API_KEY 后可用。"
-    },
-    {
-      "name": "volatility",
-      "description": "Volatility MCP（Gaffx）：内存取证框架 volatility3 集成 —— 进程/网络/注册表/凭证提取，恶意代码内存行为分析与取证。",
-      "transport": "STDIO",
-      "command": "python",
-      "args": [
-        "/opt/volatility-mcp/vol_mcp_server.py",
-        "-i",
-        "/root/memdump.raw"
-      ],
-      "env": {},
-      "runInSandbox": true,
-      "enabled": false,
-      "scope": "coding",
-      "requiresRootfs": true,
-      "vendor": "Gaffx",
-      "tags": [
-        "forensics",
-        "memory",
-        "volatility",
-        "malware"
-      ],
-      "category": "security",
-      "homepage": "https://github.com/Gaffx/volatility-mcp",
-      "envSchema": [],
-      "notes": "需 git clone 仓库到 /opt 并安装依赖；-i 参数指定待分析内存镜像路径。"
     },
     {
       "name": "aws-bedrock-kb",
